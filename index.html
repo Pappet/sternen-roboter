@@ -54,13 +54,15 @@ header{
 #buehne{
   flex:1;min-height:0;overflow:hidden;display:grid;gap:8px;
   padding:0 calc(10px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));
-  grid-template-columns:1fr;
+  grid-template-columns:minmax(0,1fr);
   grid-template-rows:1fr auto auto;
   grid-template-areas:"feld" "plan" "tasten";
 }
 @media (orientation:landscape){
   #buehne{
-    grid-template-columns:1fr minmax(260px,32vw);
+    /* minmax(0,1fr): der Bauplan darf schmaler werden als seine 12 Slots,
+       sonst quetscht er auf 1024er-Tablets die Tasten-Spalte weg */
+    grid-template-columns:minmax(0,1fr) minmax(260px,32vw);
     grid-template-rows:1fr auto;
     grid-template-areas:"feld tasten" "plan tasten";
   }
@@ -127,9 +129,11 @@ header{
 #plan{
   display:grid;gap:6px;background:var(--panel);border-radius:18px;padding:8px;
   justify-content:center;align-content:center;
-  width:max-content;max-width:100%;justify-self:center;
+  width:100%;min-width:0;justify-self:center;
+  /* max-width setzt zeichnePlan (Spalten × 74px): Slots wachsen nie über 74px,
+     schrumpfen aber mit der verfügbaren Breite */
 }
-.slot{aspect-ratio:1/1;width:clamp(44px,8.5vmin,74px)}
+.slot{aspect-ratio:1/1;width:100%;min-width:0}
 .slot{
   border-radius:12px;border:3px dashed rgba(255,255,255,.22);
   display:flex;align-items:center;justify-content:center;
@@ -149,7 +153,7 @@ header{
 #pad{
   display:grid;gap:8px;
   grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
-  align-self:center;width:min(100%,330px);aspect-ratio:1/1;max-height:42vh;
+  align-self:center;width:min(100%,var(--padW,330px));aspect-ratio:1/1;max-height:42vh;
 }
 @media (orientation:landscape){#pad{max-height:none}}
 button.knopf{
@@ -171,7 +175,7 @@ button.knopf svg{width:62%;height:62%}
 @keyframes puls{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .wackel{animation:wackel .6s ease 2}
 @keyframes wackel{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
-#extra{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-self:center;width:min(100%,330px)}
+#extra{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-self:center;width:min(100%,var(--padW,330px))}
 #extra .knopf{font-size:26px;min-height:74px;background:#EEF2FF}
 #b_schleife{color:var(--karteFuell,#2E6FB7);font-weight:700}
 #tasten.aus{opacity:.45;pointer-events:none}
@@ -238,6 +242,14 @@ button.knopf svg{width:62%;height:62%}
 .sternMini{font-size:26px;letter-spacing:4px;opacity:.9}
 .bonusChip{background:var(--gold);color:#3a2a00;border-radius:999px;padding:8px 20px;
   font-weight:700;font-size:20px;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+@media (max-width:430px){
+  header{gap:5px}
+  .chip{padding:4px 9px;font-size:17px;min-height:40px}
+  .chip b{font-size:19px}
+}
+/* mehrere Neuheiten im Fest nebeneinander */
+.festNeu{width:min(22vw,120px)}
+.festNeu .vs svg{width:100%;height:auto}
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
@@ -323,7 +335,7 @@ function load(){
   }catch(e){}
 }
 function save(){ try{ localStorage.setItem(SAVE_KEY,
-  JSON.stringify({sterne:S.sterne, aufgabe:S.aufgabe, sammlung:S.sammlung, look:S.look, ton:S.ton})); }catch(e){} }
+  JSON.stringify({sterne:S.sterne, aufgabe:S.aufgabe, sammlung:S.sammlung, look:S.look, ton:S.ton, trostFuer:S.trostFuer})); }catch(e){} }
 
 /* ---------------------------------------------------------------- Ton --- */
 let AC = null;
@@ -367,7 +379,9 @@ const Voice = (() => {
   let voice = null, queue = [], playing = false, epoch = 0;
   function pickVoice(){
     if(!HAS) return;
-    voice = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('de')) || null;
+    const de = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('de'));
+    const wert = v => (v.lang.toLowerCase().startsWith('de-de') ? 2 : 0) + (v.localService ? 1 : 0);
+    voice = de.sort((a,b) => wert(b) - wert(a))[0] || null;
   }
   if(HAS){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
   function estimate(text, rate){ return Math.min(12000, 900 + (text.length/Math.max(.5,rate))*90); }
@@ -491,7 +505,10 @@ const SVG_PLAY = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
 const pfeilIcon = d => `<span class="pfeilDreh" style="transform:rotate(${d*90}deg)">${SVG_PFEIL}</span>`;
 
 /* ------------------------------------------------------------- Level ---- */
-/* R Roboter  Z Haus  * Stern  # Stein  . frei                              */
+/* R Roboter  Z Haus  * Stern  # Stein  . frei  K Schlüssel  T Tür          */
+/* Musterlösungen (lsg) vor Level 13 nutzen bewusst kein ×3 — die Karte wird
+   erst dort eingeführt; 🎯 und Tipps müssen mit Pfeilen allein erreichbar sein. */
+const LOOP_AB = 12;   // Index des ersten Levels mit ×3-Karte (Level 13)
 const LEVELS = [
   {g:["R.Z","...","..."], lsg:[1,1],              sag:"Fahr den Roboter zum Haus."},
   {g:["R*Z","...","..."], lsg:[1,1],              sag:"Nimm den Stern mit, dann fahr zum Haus.", neu:"Neu: ein Stern! Den musst du einsammeln."},
@@ -500,18 +517,18 @@ const LEVELS = [
   {g:["Z*#.","..#.","..#.","...R"], lsg:[3,3,0,0,0,3], sag:"Hol den Stern und fahr dann zum Haus.", neu:"Neu: Steine! Da kommt der Roboter nicht durch. Fahr drum herum."},
   {g:["Z#.*","..R#","..#.","#..."], lsg:[0,1,3,2,3,3,0], sag:"Hol den Stern und fahr dann zum Haus."},
   {g:["..#.","#Z..","R.*#",".#.*"], lsg:[1,1,2,1,3,0,0,3], sag:"Hol beide Sterne und fahr dann zum Haus.", neu:"Neu: zwei Sterne! Hol beide."},
-  {g:["#..#","#*#.","R..*","Z#.."], lsg:[1,'x',3,3,0,2,3,2], sag:"Hol beide Sterne und fahr dann zum Haus."},
+  {g:["#..#","#*#.","R..*","Z#.."], lsg:[1,0,2,1,1,3,3,3,2], sag:"Hol beide Sterne und fahr dann zum Haus."},
   {g:["...##",".#.*#",".R...","...*.","Z#..."], lsg:[1,0,1,2,2,3,3,3,2], sag:"Hol beide Sterne und fahr dann zum Haus.", neu:"Neu: ein größeres Feld!"},
   {g:["Z.*..",".###.",".....","##...","#.R*."], lsg:[1,0,0,1,0,0,3,3,3,3], sag:"Hol beide Sterne und fahr dann zum Haus."},
-  {g:["##.*#",".*.Z.","*....","#..##","R...."], lsg:[1,0,0,3,1,2,'x'], sag:"Hol alle drei Sterne und fahr dann zum Haus.", neu:"Neu: drei Sterne! Hol alle drei."},
+  {g:["##.*#",".*.Z.","*....","#..##","R...."], lsg:[1,0,0,3,0,1,1,0,1,2], sag:"Hol alle drei Sterne und fahr dann zum Haus.", neu:"Neu: drei Sterne! Hol alle drei."},
   {g:["#.*..",".#...","##R#.",".#.*.","*Z..#"], lsg:[0,0,2,2,2,1,2,3,3,3,1], sag:"Hol alle drei Sterne und fahr dann zum Haus."},
-  {g:["...Z.","..*..",".....","R...."], lsg:[0,1,'x'], sag:"Fahr die Treppe hinauf zum Haus. Tipp: ↑, → und dann die ×3-Karte.",
-   neu:"Neu: die ×3-Karte! Sie wiederholt alles, was vor ihr liegt, drei Mal."},
-  {g:["......Z",".......",".......","...*...",".......",".......","R......"], lsg:[0,1,0,1,'x'], sag:"Hol den Stern und fahr zum Haus. Die ×3-Karte macht den Weg kürzer."},
-  {g:["R.T.Z",".#.#.","..K..",".....","....."], lsg:[2,2,1,1,0,0,1,1], sag:"Die Tür ist zu. Hol erst den Schlüssel, dann fahr zum Haus.",
+  {g:["...Z.","..*..",".....","R...."], lsg:[0,1,'x'], sag:"Fahr die Treppe hinauf zum Haus. Tipp: nach oben, nach rechts und dann die Mal-drei-Karte.",
+   neu:"Neu: die Mal-drei-Karte! Sie wiederholt alles, was vor ihr liegt, drei Mal."},
+  {g:["......Z",".......",".......","...*...",".......",".......","R......"], lsg:[0,1,0,1,'x'], sag:"Hol den Stern und fahr zum Haus. Die Mal-drei-Karte macht den Weg kürzer."},
+  {g:["R.T.Z",".#.##","..K..",".....","....."], lsg:[2,2,1,1,0,0,1,1], sag:"Die Tür ist zu. Hol erst den Schlüssel, dann fahr zum Haus.",
    neu:"Neu: eine Tür! Sie ist zu. Der Roboter braucht erst den Schlüssel."},
-  {g:["R.T.Z",".#.#.","..K*.",".....","....."], lsg:[2,2,1,1,1,1,0,0], sag:"Hol den Schlüssel und den Stern, dann fahr zum Haus."},
-  {g:[".......Z","........",".....*..","........","...*....","........","........","R......."], lsg:[0,1,0,1,'x',0,1], sag:"Diese Treppe ist zu lang für 12 Karten. Die ×3-Karte wiederholt deine Karten drei Mal."},
+  {g:["R.T.Z",".#.##","..K*.",".....","....."], lsg:[2,2,1,1,1,3,0,0,1,1], sag:"Hol den Schlüssel und den Stern, dann fahr zum Haus."},
+  {g:[".......Z","........",".....*..","........","...*....","........","........","R......."], lsg:[0,1,0,1,'x',0,1], sag:"Diese Treppe ist zu lang für 12 Karten. Die Mal-drei-Karte wiederholt deine Karten drei Mal."},
   {g:[".........Z","..........",".......*..","..........","..........","....*.....","..........","..........","..........","R........."], lsg:[0,1,'x','x'], sag:"Die ganz lange Treppe! Fahr hinauf zum Haus."}
 ];
 
@@ -598,26 +615,28 @@ function loesung(startR, startC, maskStart){
    Rätseln ohne Loop-Lösung bricht das Budget ab und die klassische Pfeil-BFS
    dient als Fallback (deren Ergebnis stimmt immer, kennt nur kein ×3). */
 const PLAN_NODES = 20000;   // Budget: hält die Suche auf Tablets unter ~100 ms
-function planBFS(startR, startC, maskStart){
+/* expStart: schon gespielte Züge (×3 wiederholt auch die), budget: wie viele
+   Karten noch frei sind. Ergebnis null = in diesem Budget nicht lösbar. */
+function planBFS(startR, startC, maskStart, expStart = [], budget = MAX_KARTEN){
   const zielKey = L.ziel.r+','+L.ziel.c+','+maskZiel();
   const fwd = bfs(startR, startC, maskStart);
   const direkt = fwd.get(zielKey);
-  let best = direkt ? direkt.weg : null;
+  let best = direkt && direkt.weg.length <= budget ? direkt.weg : null;
   if(best && best.length <= 2) return best;
-  const q = [{r:startR, c:startC, m:maskStart, exp:[], k:[]}];
-  const gesehen = new Set([startR+','+startC+','+maskStart+',']);
+  const q = [{r:startR, c:startC, m:maskStart, exp:expStart, k:[]}];
+  const gesehen = new Set([startR+','+startC+','+maskStart+','+expStart.join('')]);
   let nodes = 0;
   while(q.length){
     const k = q.shift();
     if(best && k.k.length >= best.length) continue;
-    if(k.k.length >= MAX_KARTEN) continue;
+    if(k.k.length >= budget) continue;
     for(let i=0; i<5; i++){
       const d = i < 4 ? i : 'x';
       let r, c, m, exp2, k2;
       if(d === 'x'){
         if(!k.exp.length) continue;                 // ×3 ganz vorne: keine Wirkung
+        if(k.exp.length*3 > EXP_CAP) continue;      // zu lang für eine Aufführung
         exp2 = k.exp.concat(k.exp, k.exp);
-        if(exp2.length > EXP_CAP) continue;         // zu lang für eine Aufführung
         r = k.r; c = k.c; m = k.m;
         let ok = true;
         for(let p=0; p<2 && ok; p++){               // ×3 fährt die Aufführung 2× erneut
@@ -659,31 +678,80 @@ function simuliere(karten){
     if(!s) return {r, c, mask:m, bums:true};
     r = s.r; c = s.c; m = s.mask;
   }
-  return {r, c, mask:m};
+  return {r, c, mask:m, exp:ex.exp};
 }
 
 /* ----------------------------------------------- Zufallslevel (endlos) --- */
-function zufallsLevel(){
+/* Drei Sorten, damit Gelerntes nicht verloren geht: Sterne-Feld (5×5),
+   Schlüssel & Tür (6×6, Tür liegt garantiert auf dem einzigen Weg) und
+   Treppe (8–10, nur mit ×3 in 12 Karten schaffbar). Jede Aufgabe wird vor dem
+   Anzeigen per Breitensuche geprüft.                                       */
+const zuf = n => Math.floor(Math.random()*n);
+function mitLevel(g, fn){ const merk = L; L = parse(g); try{ return fn(); } finally{ L = merk; } }
+const zeilen = g => g.map(z => z.join(''));
+function zufallSterne(){
   for(let versuch=0; versuch<400; versuch++){
     const n = 5;
     const g = Array.from({length:n}, () => Array(n).fill('.'));
     const frei2 = [];
     for(let r=0;r<n;r++) for(let c=0;c<n;c++) frei2.push({r,c});
-    const zieh = () => frei2.splice(Math.floor(Math.random()*frei2.length), 1)[0];
-    const anzSteine = 5 + Math.floor(Math.random()*3);
+    const zieh = () => frei2.splice(zuf(frei2.length), 1)[0];
+    const anzSteine = 5 + zuf(3);
     for(let i=0;i<anzSteine;i++){ const p = zieh(); g[p.r][p.c] = '#'; }
     const st = zieh(); g[st.r][st.c] = 'R';
     const zi = zieh(); g[zi.r][zi.c] = 'Z';
-    const anzSterne = 2 + Math.floor(Math.random()*2);
+    const anzSterne = 2 + zuf(2);
     for(let i=0;i<anzSterne;i++){ const p = zieh(); g[p.r][p.c] = '*'; }
-    const kandidat = parse(g.map(z => z.join('')));
-    const merk = L; L = kandidat;
-    const lsg = loesung(kandidat.start.r, kandidat.start.c, 0);
-    L = merk;
+    const lsg = mitLevel(zeilen(g), () => loesung(L.start.r, L.start.c, 0));
     if(lsg && lsg.length >= 7 && lsg.length <= 11)
-      return {g:g.map(z=>z.join('')), sag:"Hol alle Sterne und fahr dann zum Haus."};
+      return {g:zeilen(g), sag:"Hol alle Sterne und fahr dann zum Haus."};
   }
-  return LEVELS[LEVELS.length-1];
+  return null;
+}
+function zufallTuer(){
+  for(let versuch=0; versuch<400; versuch++){
+    const n = 6;
+    const g = Array.from({length:n}, () => Array(n).fill('.'));
+    const frei2 = [];
+    for(let r=0;r<n;r++) for(let c=0;c<n;c++) frei2.push({r,c});
+    const zieh = () => frei2.splice(zuf(frei2.length), 1)[0];
+    // Haus einmauern: genau ein Nachbar ist die Tür, die übrigen Nachbarn Steine
+    // → die Tür liegt garantiert auf dem einzigen Weg
+    const zi = zieh(); g[zi.r][zi.c] = 'Z';
+    const nachbarn = DIRS.map(([dr,dc]) => ({r:zi.r+dr, c:zi.c+dc})).filter(p => p.r>=0 && p.c>=0 && p.r<n && p.c<n);
+    const tuer = nachbarn[zuf(nachbarn.length)];
+    nachbarn.forEach(p => {
+      const idx = frei2.findIndex(f => f.r === p.r && f.c === p.c);
+      if(idx >= 0) frei2.splice(idx, 1);
+      g[p.r][p.c] = (p === tuer) ? 'T' : '#';
+    });
+    const anzSteine = 5 + zuf(4);
+    for(let i=0;i<anzSteine;i++){ const p = zieh(); g[p.r][p.c] = '#'; }
+    for(const ch of ['R','K']){ const p = zieh(); g[p.r][p.c] = ch; }
+    const anzSterne = 1 + zuf(2);
+    for(let i=0;i<anzSterne;i++){ const p = zieh(); g[p.r][p.c] = '*'; }
+    const lsg = mitLevel(zeilen(g), () => loesung(L.start.r, L.start.c, 0));
+    if(!lsg || lsg.length < 8 || lsg.length > 12) continue;
+    return {g:zeilen(g), sag:"Hol erst den Schlüssel, dann alle Sterne, und fahr zum Haus."};
+  }
+  return null;
+}
+/* Musterlösungen der Treppen (offline mit großem Budget berechnet) — die
+   Sterne liegen auf dem Pfad, darum hängt die Lösung nur von der Größe ab */
+const TREPPE_LSG = {8:[0,1,0,1,'x',0,1], 9:[0,1,0,1,'x',0,1,0,1], 10:[0,1,'x','x']};
+function zufallTreppe(){
+  const n = 8 + zuf(3);                       // 8, 9 oder 10 → 14, 16, 18 Züge
+  const g = Array.from({length:n}, () => Array(n).fill('.'));
+  g[n-1][0] = 'R'; g[0][n-1] = 'Z';
+  // Sterne auf dem Treppenpfad (Stufenende k = (n-1-k, k)), damit ×3 passt
+  const stufen = []; for(let k=1;k<n-1;k++) stufen.push(k);
+  for(let i=0;i<2 && stufen.length;i++){ const k = stufen.splice(zuf(stufen.length),1)[0]; g[n-1-k][k] = '*'; }
+  return {g:zeilen(g), lsg:TREPPE_LSG[n], sag:"Eine Treppe! Die Mal-drei-Karte hilft dir."};
+}
+function zufallsLevel(){
+  const w = Math.random();
+  const lvl = (w < .15 ? zufallTreppe() : w < .45 ? zufallTuer() : null) || zufallSterne();
+  return lvl || LEVELS[LEVELS.length-1];
 }
 function levelDaten(i){ return i < LEVELS.length ? LEVELS[i] : zufallsLevel(); }
 /* ==== TESTBLOCK-ENDE ==== */
@@ -714,9 +782,20 @@ function baueFeld(){
   setzeRoboter(false);
 }
 function metrics(pass = 0){
-  const box = $('feldBox').getBoundingClientRect();
+  const rs = document.documentElement.style;
+  if(pass === 0) rs.setProperty('--padW', '330px');
+  let box = $('feldBox').getBoundingClientRect();
   if(!L || box.width < 20) return;
-  const s = Math.max(40, Math.floor(Math.min(box.width/L.cols, box.height/L.rows)) - 2);
+  // Hochkant: passt das Feld nicht mit 40px-Kacheln, den Tasten-Block verkleinern
+  // (er ist quadratisch, jedes Pixel weniger Breite gibt dem Feld ein Pixel Höhe)
+  if(pass === 0 && !matchMedia('(orientation:landscape)').matches){
+    const fehlt = L.rows*42 - box.height;
+    if(fehlt > 0){
+      rs.setProperty('--padW', Math.max(210, 330 - fehlt) + 'px');
+      box = $('feldBox').getBoundingClientRect();
+    }
+  }
+  const s = Math.max(24, Math.floor(Math.min(box.width/L.cols, box.height/L.rows)) - 2);
   const gap = Math.max(4, Math.round(s*.08));
   document.documentElement.style.setProperty('--s', s+'px');
   document.documentElement.style.setProperty('--gap', gap+'px');
@@ -766,7 +845,8 @@ function zeichneLeiste(){
 function zeichnePlan(neuIdx = -1){
   const p = $('plan');
   const spalten = Math.min(MAX_KARTEN, matchMedia('(orientation:landscape)').matches ? 12 : 6);
-  p.style.gridTemplateColumns = `repeat(${spalten},auto)`;
+  p.style.gridTemplateColumns = `repeat(${spalten},minmax(0,1fr))`;
+  p.style.maxWidth = (spalten*74 + (spalten-1)*6 + 16) + 'px';
   p.innerHTML = '';
   for(let i=0;i<MAX_KARTEN;i++){
     const d = document.createElement('div');
@@ -805,20 +885,21 @@ function tippGeben(){
       const praefix = L.lsg.slice(0, prog.length).every((k,i) => k === prog[i]);
       if(praefix && prog.length < L.lsg.length) lsg = [L.lsg[prog.length]];
     }
-    // Liegt schon eine ×3 im Bauplan, kann das Anhängen von ×3 den Rest erledigen
-    if(!lsg && prog.includes('x') && prog.length < MAX_KARTEN){
-      const mitX = simuliere([...prog, 'x']);
-      if(!mitX.zuLang && !mitX.bums && mitX.mask === maskZiel() && mitX.r === L.ziel.r && mitX.c === L.ziel.c)
-        lsg = ['x'];
-    }
-    if(!lsg) lsg = planBFS(sim.r, sim.c, sim.mask);
-    if(lsg && lsg.length){
+    // Sonst: Suche ab der jetzigen Stellung — ×3 wiederholt auch die schon
+    // liegenden Karten, und nur die freien Slots dürfen verplant werden.
+    if(!lsg && prog.length < MAX_KARTEN) lsg = planBFS(sim.r, sim.c, sim.mask, sim.exp, MAX_KARTEN - prog.length);
+    if(!lsg || !lsg.length){
+      // So passt es nicht mehr in den Bauplan: eine Karte wegnehmen
+      $('b_undo').classList.add('wackel');
+      setTimeout(() => $('b_undo').classList.remove('wackel'), 1300);
+      Voice.replace({text:'So passt der Weg nicht mehr. Nimm eine Karte weg.'});
+    }else{
       const erster = lsg[0];
       const taste = erster === 'x' ? $('b_schleife')
         : document.querySelector(`.pfeil[data-d="${erster}"]`);
       if(taste){ taste.classList.add('wackel'); setTimeout(() => taste.classList.remove('wackel'), 1300); }
-      Voice.replace({text: sim.mask !== maskZiel()
-        ? 'Denk an die Sterne. Probier diesen Pfeil.' : 'Probier diesen Pfeil.'});
+      const was = erster === 'x' ? 'Probier die Mal-drei-Karte.' : 'Probier diesen Pfeil.';
+      Voice.replace({text: sim.mask !== maskZiel() ? 'Denk an die Sterne. ' + was : was});
     }
   }
   tippPlanen();
@@ -834,10 +915,12 @@ function neueAufgabe(){
     const plan = planBFS(L.start.r, L.start.c, 0);
     L.opt = plan ? plan.length : 0;
   }
-  prog = []; mask = 0; S.trostGegeben = false;
+  prog = []; mask = 0;
+  S.trostGegeben = S.trostFuer === S.aufgabe;   // nach Neuladen kein zweiter Trost-Stern
   bot = {r:L.start.r, c:L.start.c, d:1};
   $('aufgabe').textContent = S.aufgabe + 1;
-  baueFeld(); zeichneLeiste(); zeichnePlan();
+  $('b_schleife').hidden = S.aufgabe < LOOP_AB;   // ×3 erst, wenn sie eingeführt ist
+  zeichneLeiste(); zeichnePlan(); baueFeld();     // erst Leiste/Plan, dann das Feld in den Rest messen
   const ansagen = [];
   if(L.neu) ansagen.push({text:L.neu, pause:250});
   ansagen.push({text:L.sag});
@@ -852,14 +935,21 @@ function freiesFahren(){
   prog = []; mask = 0;
   bot = {r:2,c:2,d:1};
   $('aufgabe').textContent = '🪐';
-  baueFeld(); zeichneLeiste(); zeichnePlan();
+  $('b_schleife').hidden = false;
+  zeichneLeiste(); zeichnePlan(); baueFeld();
   Voice.replace({text:'Freies Fahren. Bau einen Weg und schau zu, wohin der Roboter fährt.'});
   clearTimeout(tippTimer);
 }
 
 function karteDazu(d){
   if(S.busy || prog.length >= MAX_KARTEN){ if(prog.length >= MAX_KARTEN) SFX.nope(); return; }
-  ac(); prog.push(d);
+  ac();
+  if(d === 'x' && !prog.length){           // ×3 ganz vorne hätte nichts zu wiederholen
+    SFX.nope(); vib(30);
+    Voice.replace({text:'Die Mal-drei-Karte braucht Karten davor. Leg erst einen Pfeil.'});
+    tippPlanen(); return;
+  }
+  prog.push(d);
   if(d === 'x') SFX.loop(); else SFX.karte(d);
   zeichnePlan(prog.length-1);
   tippPlanen();
@@ -928,20 +1018,10 @@ async function starten(){
   S.busy = true; $('tasten').classList.add('aus');
   $('b_los').classList.remove('bereit');
   if(!S.frei){                       // Aufgabe: alles zurück auf Anfang
-    mask = 0;
     bot = {r:L.start.r, c:L.start.c, d:bot.d};
     setzeRoboter(false);
-    L.sterne.forEach((s,i) => {
-      const k = $('feld').querySelector(`[data-stern="${i}"]`);
-      if(k) k.innerHTML = SVG_STERN;
-    });
-    const sk = $('feld').querySelector('[data-schluessel]');
-    if(sk) sk.innerHTML = SVG_SCHLUESSEL;
-    const tk = L.tuer && $('feld').querySelector(`[data-rc="${L.tuer.r},${L.tuer.c}"]`);
-    if(tk) tk.innerHTML = SVG_TUER;
-    $('feld').querySelectorAll('.spur').forEach(k => k.classList.remove('spur'));
+    feldZuruecksetzen();
   }
-  zeichneLeiste();
   await warte(350);
   [...$('plan').children].forEach(s => s.classList.remove('fehler'));
 
@@ -952,10 +1032,11 @@ async function starten(){
     [...slots].forEach(s => s.classList.remove('dran'));
     slots[slot].classList.add('dran');
     const d = ex.exp[i];
-    const nr = bot.r + DIRS[d][0], nc = bot.c + DIRS[d][1];
     bot.d = d;
-    const verschlossen = L.tuer && nr === L.tuer.r && nc === L.tuer.c && !(mask & keyBit());
-    if(!frei(nr,nc) || verschlossen){
+    const zug = schrittVon(bot.r, bot.c, d, mask);
+    if(!zug){
+      const nr = bot.r + DIRS[d][0], nc = bot.c + DIRS[d][1];
+      const verschlossen = !!(L.tuer && nr === L.tuer.r && nc === L.tuer.c && frei(nr,nc));
       if(!S.frei){ slots[slot].classList.add('fehler'); fehlerIdx = slot; tuerZu = verschlossen; }
       $('roboter').classList.add('bums');
       setzeRoboter(true); SFX.nope(); vib(35);
@@ -963,8 +1044,8 @@ async function starten(){
       $('roboter').classList.remove('bums');
       gebumst = true; break;
     }
-    bot.r = nr; bot.c = nc;
-    const k = $('feld').querySelector(`[data-rc="${nr},${nc}"]`);
+    bot.r = zug.r; bot.c = zug.c;
+    const k = $('feld').querySelector(`[data-rc="${zug.r},${zug.c}"]`);
     if(k) k.classList.add('spur');       // Spur auch im Aufgabenmodus
     setzeRoboter(true); SFX.schritt();
     await warte(330);
@@ -985,7 +1066,7 @@ async function starten(){
   const alleSachen = mask === maskZiel();
   const amZiel = L.ziel && bot.r === L.ziel.r && bot.c === L.ziel.c;
   if(!gebumst && alleSachen && amZiel) await gewonnen();
-  else fastGeschafft(gebumst, tuerZu, alleSachen, fehlerIdx);
+  else await fastGeschafft(gebumst, tuerZu, alleSachen, fehlerIdx);
 }
 
 /* Stern und Schlüssel an der aktuellen Position einsammeln */
@@ -1013,8 +1094,21 @@ function sammle(m){
   return m;
 }
 
-function fastGeschafft(gebumst, tuerZu, alleSachen, fehlerIdx){
-  S.busy = false; $('tasten').classList.remove('aus');
+/* Feld auf Anfang: Sterne, Schlüssel, Tür und Spur zurück */
+function feldZuruecksetzen(){
+  mask = 0;
+  L.sterne.forEach((s,i) => {
+    const k = $('feld').querySelector(`[data-stern="${i}"]`);
+    if(k) k.innerHTML = SVG_STERN;
+  });
+  const sk = $('feld').querySelector('[data-schluessel]');
+  if(sk) sk.innerHTML = SVG_SCHLUESSEL;
+  const tk = L.tuer && $('feld').querySelector(`[data-rc="${L.tuer.r},${L.tuer.c}"]`);
+  if(tk) tk.innerHTML = SVG_TUER;
+  $('feld').querySelectorAll('.spur').forEach(k => k.classList.remove('spur'));
+  zeichneLeiste();
+}
+async function fastGeschafft(gebumst, tuerZu, alleSachen, fehlerIdx){
   let text;
   if(tuerZu) text = 'Die Tür ist zu. Der Roboter braucht erst den Schlüssel.';
   else if(gebumst) text = 'Ups, da war ein Hindernis. Nimm die rote Karte weg und probier eine andere.';
@@ -1022,16 +1116,23 @@ function fastGeschafft(gebumst, tuerZu, alleSachen, fehlerIdx){
   else text = 'Fast! Der Roboter steht noch nicht beim Haus. Häng noch eine Karte an.';
   Voice.replace({text});
   if(!S.trostGegeben){           // kleine Belohnung fürs Probieren, nur einmal
-    S.trostGegeben = true;
-    sterneDazu(1, false);
+    S.trostGegeben = true; S.trostFuer = S.aufgabe;
+    sterneDazu(1);
   }
+  // Roboter fährt zurück zum Start, die Karten bleiben liegen
+  await warte(500);
+  bot = {r:L.start.r, c:L.start.c, d:bot.d};
+  setzeRoboter(true);
+  await warte(350);
+  feldZuruecksetzen();
+  S.busy = false; $('tasten').classList.remove('aus');
   zeichnePlan();
   if(fehlerIdx >= 0 && $('plan').children[fehlerIdx])
     $('plan').children[fehlerIdx].classList.add('fehler');   // Karte bleibt markiert
   tippPlanen();
 }
 
-function sterneDazu(n, gross){
+function sterneDazu(n){
   const vorher = S.sterne;
   S.sterne += n; $('punkte').textContent = S.sterne; save();
   S.neuOffen = S.neuOffen.concat(neuFreigeschaltet(vorher, S.sterne));
@@ -1047,7 +1148,7 @@ async function gewonnen(){
   await warte(1500);
   $('roboter').classList.remove('tanz');
   const belohnung = 3 + L.sterne.length + (L.schluessel ? 1 : 0) + (optimal ? 1 : 0);
-  sterneDazu(belohnung, true);
+  sterneDazu(belohnung);
   S.aufgabe += 1; save();
   const rundeFertig = S.aufgabe % 4 === 0;
   if(rundeFertig){ S.sammlung += 1; save(); }
@@ -1064,9 +1165,10 @@ async function gewonnen(){
 const PLANETEN = ['🪐','🌙','☄️','🌍','🚀','🛸','🌟','🌈','🌞','🦄','🐙','🍭'];
 function zeigeFest(gross, optimal){
   const f = $('fest');
-  const neu = S.neuOffen.length ? S.neuOffen[0] : null;
+  const neu = S.neuOffen.length ? S.neuOffen : null;
   if(neu){
-    $('festBild').innerHTML = vorschau(neu.kat, neu.item);
+    $('festBild').innerHTML = `<div class="sternReihe">${neu.map(n =>
+      `<div class="festNeu">${vorschau(n.kat, n.item)}</div>`).join('')}</div>`;
     $('festText').textContent = 'Neu in der Werkstatt!';
     $('wKnopf').hidden = false;
     Voice.say({text:'Etwas Neues ist in der Werkstatt. Schau mal rein!'});
@@ -1190,7 +1292,7 @@ function vorschau(katKey, item){
   return `<div class="vs" style="--karteFuell:${item.fuell};--karteRand:${item.rand}">${SVG_PFEIL}</div>`;
 }
 function zeigeWerkstatt(){
-  ac();
+  ac(); clearTimeout(tippTimer); Voice.flush();
   const w = $('werkstatt');
   let h = '';
   KATEGORIEN.forEach(kat => {
@@ -1240,7 +1342,7 @@ $('werkstattChip').addEventListener('click', () => { if(!S.busy) zeigeWerkstatt(
 $('wKnopf').addEventListener('click', () => { $('fest').hidden = true; S.neuOffen = []; zeigeWerkstatt(); });
 $('wFertig').addEventListener('click', () => {
   ac(); $('werkstatt').hidden = true; SFX.klick();
-  if(!L && !document.getElementById('start')) neueAufgabe();
+  if($('fest').hidden) tippPlanen();
 });
 $('wInhalt').addEventListener('click', e => {
   const b = e.target.closest('.wItem'); if(!b) return;
@@ -1262,6 +1364,7 @@ $('weiter').addEventListener('click', () => {
 /* Sieg noch einmal ansehen: gleicher Lauf, keine doppelte Belohnung */
 $('nochmal').addEventListener('click', async () => {
   ac(); $('fest').hidden = true; S.replay = true;
+  S.neuOffen = [];                     // „Neu in der Werkstatt" wurde schon gezeigt
   await starten();
 });
 /* 🔇 für Eltern: SFX und Sprache zusammen stummschalten */
@@ -1290,6 +1393,20 @@ $('punkteChip').addEventListener('pointerdown', () => { resetT = setTimeout(() =
 }, 3000); });
 ['pointerup','pointerleave','pointercancel'].forEach(ev =>
   $('punkteChip').addEventListener(ev, () => clearTimeout(resetT)));
+/* Eltern: Aufgaben-Chip 3 Sekunden halten → zu einer Aufgabe springen */
+let wahlT;
+$('aufgabeChip').addEventListener('pointerdown', () => { wahlT = setTimeout(() => {
+  if(S.busy) return;
+  const eingabe = prompt(`Zu welcher Aufgabe? (1–${LEVELS.length}, größer = Endlos-Aufgaben)`, S.aufgabe + 1);
+  const n = parseInt(eingabe, 10);
+  if(!eingabe || isNaN(n) || n < 1) return;
+  S.aufgabe = n - 1; S.frei = false; save();
+  $('fest').hidden = true; $('werkstatt').hidden = true;
+  if(document.getElementById('start')) $('start').remove();
+  neueAufgabe();
+}, 3000); });
+['pointerup','pointerleave','pointercancel'].forEach(ev =>
+  $('aufgabeChip').addEventListener(ev, () => clearTimeout(wahlT)));
 
 function startSpiel(freiModus){
   ac();
@@ -1314,8 +1431,16 @@ anwenden();
 $('sammlung').innerHTML = Array.from({length:S.sammlung},
   (_,i) => `<span>${PLANETEN[i % PLANETEN.length]}</span>`).join('');
 
-if('serviceWorker' in navigator)
+if('serviceWorker' in navigator){
+  // Neue Version aktiviert sich sofort (skipWaiting); damit sie nicht erst beim
+  // übernächsten Start sichtbar wird, einmal neu laden — aber nie mitten im Spiel.
+  let hatteSW = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(hatteSW && !S.busy && document.getElementById('start')) location.reload();
+    hatteSW = true;
+  });
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>

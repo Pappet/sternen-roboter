@@ -14,7 +14,11 @@ erst denken, dann läuft es ab, dann verbessern.
 - **🔊** sagt die Aufgabe nochmal an.
 - Nach 13 Sekunden ohne Aktion wackelt die Taste, die als Nächstes passen würde,
   und die Ansage kommt nochmal. Der Tipp wird aus einer echten Wegsuche berechnet,
-  also passt er auch, wenn schon halb falsche Karten liegen.
+  also passt er auch, wenn schon halb falsche Karten liegen. Die Suche kennt dabei
+  die schon liegenden Karten (eine ×3 wiederholt ja auch die) und nur die noch
+  freien Slots — passt der Rest nicht mehr hinein, wackelt stattdessen ↩.
+- Die **×3-Taste** erscheint erst ab Aufgabe 13, wenn sie eingeführt wird
+  (im Freien Fahren immer).
 
 Die Pfeile sind absolute Richtungen (oben/unten/links/rechts auf dem Bildschirm),
 nicht "drehe dich nach links". Das ist für dieses Alter deutlich einfacher — relative
@@ -22,8 +26,9 @@ Drehungen sind der klassische Stolperstein bei Bee-Bot-artigen Spielen.
 
 ## Kein Verlieren
 
-- Falscher Weg: Der Roboter stößt an, fährt zurück zum Start, die Karten **bleiben
-  liegen**, die schuldige Karte wird rot umrandet. Dazu eine ruhige Erklärung.
+- Falscher Weg: Der Roboter stößt an, fährt sichtbar zurück zum Start (Sterne,
+  Schlüssel und Tür werden zurückgesetzt), die Karten **bleiben liegen**, die
+  schuldige Karte wird rot umrandet. Dazu eine ruhige Erklärung.
 - Fürs Probieren gibt es einmal pro Aufgabe einen Trost-Stern, für die Lösung 3 Sterne
   plus einen je eingesammeltem Stern. Sterne werden nie abgezogen.
 - Alle 4 Aufgaben gibt es ein Runden-Fest und einen neuen Planeten für die Sammlung
@@ -38,22 +43,25 @@ Drehungen sind der klassische Stolperstein bei Bee-Bot-artigen Spielen.
 | 1–2 | 3×3 | Weg zum Haus, dann der erste Stern | 2 Karten |
 | 3–4 | 3×3 | Ecken, Umwege | 4–6 |
 | 5–6 | 4×4 | Steine als Hindernis | 6–7 |
-| 7–8 | 4×4 | zwei Sterne, Reihenfolge überlegen | 8 |
+| 7–8 | 4×4 | zwei Sterne, Reihenfolge überlegen | 8–9 |
 | 9–10 | 5×5 | grösseres Feld | 9–10 |
-| 11–12 | 5×5 | drei Sterne | 7 (mit ×3) – 11 |
+| 11–12 | 5×5 | drei Sterne | 10–11 |
 | 13 | 5×4 | ×3-Karte: erste Treppe, 🎯 zeigt 3 | 3 mit ×3 |
 | 14 | 7×7 | ×3 üben | 5 mit ×3 |
-| 15–16 | 5×5 | 🔑 Schlüssel & Tür: erst der Schlüssel, dann öffnet die Tür | 8 |
+| 15–16 | 5×5 | 🔑 Schlüssel & Tür: das Haus ist eingemauert, nur durch die Tür geht es | 8–10 |
 | 17 | 8×8 | Treppe, ohne ×3 unlösbar (14 Züge) | 7 mit ×3 |
 | 18 | 10×10 | die ganz lange Treppe | 4 mit ×3×3 |
 
-Danach erzeugt das Spiel **endlos neue Aufgaben** (5×5, 2–3 Sterne). Jede wird vor
-dem Anzeigen mit einer Breitensuche geprüft: sie ist garantiert lösbar und braucht
-7–11 Karten. Die Musterlösungen aller 18 festen Aufgaben liegen mitgeliefert bei
-(`lsg` in `LEVELS`, offline verifiziert) — nur die Endlos-Aufgaben suchen zur
-Laufzeit, mit Budget und Fallback auf die Pfeil-BFS. Bei ein paar früheren
-Aufgaben (z. B. 8 und 11) findet die Suche mit ×3 einen knapperen Weg als den
-schlichten Pfeilweg — das 🎯 zeigt dann die kleinere Zahl.
+Danach erzeugt das Spiel **endlos neue Aufgaben** in drei Sorten, damit nichts
+Gelerntes verloren geht: Sterne-Feld (5×5, 2–3 Sterne, 7–11 Karten), Schlüssel &
+Tür (6×6, das Haus ist eingemauert, die Tür liegt garantiert auf dem einzigen Weg,
+8–12 Karten) und Treppe (8–10 Felder, nur mit ×3 in 12 Karten schaffbar; die
+Sterne liegen auf dem Treppenpfad). Jede wird vor dem Anzeigen mit einer
+Breitensuche geprüft. Die Musterlösungen aller 18 festen Aufgaben und der Treppen
+liegen mitgeliefert bei (`lsg` in `LEVELS` bzw. `TREPPE_LSG`, offline verifiziert)
+— nur die Zufalls-Sterne- und Tür-Aufgaben suchen zur Laufzeit, mit Budget und
+Fallback auf die Pfeil-BFS. Vor Aufgabe 13 nutzt keine Musterlösung die ×3-Karte,
+das 🎯 ist also immer mit dem erreichbar, was schon eingeführt wurde.
 
 ## Kürzester Weg (🎯)
 
@@ -116,9 +124,12 @@ Spiralen legen. ✖ wischt die Spur weg.
 
 - **Spielstand zurücksetzen**: die Sternenanzeige oben links 3 Sekunden gedrückt
   halten, dann Sicherheitsabfrage.
+- **Zu einer Aufgabe springen**: die 🏁-Anzeige 3 Sekunden gedrückt halten und
+  die Nummer eingeben (größer als 18 = Endlos-Aufgaben).
 - **🔊/🔇 oben rechts**: Ton und Sprachausgabe gemeinsam stummschalten.
 - Gespeichert wird in `localStorage` unter `sternen-roboter-spielstand`
-  (Sterne, aktuelle Aufgabe, Planeten, gewähltes Aussehen, Ton an/aus).
+  (Sterne, aktuelle Aufgabe, Planeten, gewähltes Aussehen, Ton an/aus, ob der
+  Trost-Stern der aktuellen Aufgabe schon vergeben ist).
 - Freischalt-Schwellen stehen in `index.html` in `ROBOTER`, `WELTEN` und
   `KARTENSTILE` (Feld `ab`) — dort lassen sie sich leicht anders takten.
 - Belohnung pro gelöster Aufgabe: 3 Sterne + 1 je eingesammeltem Stern + 1 je
@@ -146,13 +157,17 @@ Braucht **HTTPS**, sonst gibt es keinen Service Worker und keine Installation
    mitgeliefert wird (kein Google-Fonts-Abruf mehr).
 
 Nach **jeder** Änderung am Spiel `VERSION` in `sw.js` hochzählen, sonst zeigt das
-Tablet weiter die alte Fassung.
+Tablet weiter die alte Fassung. Die neue Fassung übernimmt der Service Worker
+sofort; die Seite lädt sich dafür einmal neu — aber nur auf der Startseite, nie
+mitten in einer Aufgabe.
 
 ## Dateien
 
     index.html              das ganze Spiel (CSS, JS, SVG inline)
-    sw.js                   Service Worker (VERSION = v5)
+    sw.js                   Service Worker (VERSION = v6)
     manifest.webmanifest
     fonts/                  Fredoka (Variable Font, latin) — offline eingebettet
     icons/                  192, 512, 512-maskable, 180, favicon
     tests/                  Node-Logiktest: node tests/logik.test.mjs
+                            (Musterlösungen, Staffelung ohne ×3 vor 13, Tür nötig,
+                            Tipp-Budget, ×3-Semantik, alle drei Endlos-Sorten)
