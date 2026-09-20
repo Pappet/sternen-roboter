@@ -1,7 +1,9 @@
 {
+  "id": "./",
   "name": "Sternen-Roboter",
   "short_name": "Roboter",
   "lang": "de",
+  "description": "Logikspiel zum Wege-Planen für Kinder ab ca. 5 Jahren.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

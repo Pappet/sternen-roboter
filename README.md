@@ -31,7 +31,7 @@ Drehungen sind der klassische Stolperstein bei Bee-Bot-artigen Spielen.
 
 ## Schwierigkeitsstufen
 
-12 handgebaute Aufgaben, jede Neuerung wird einzeln angekündigt und eingeführt:
+16 handgebaute Aufgaben, jede Neuerung wird einzeln angekündigt und eingeführt:
 
 | Aufgabe | Feld | Neu | Kürzeste Lösung |
 |---|---|---|---|
@@ -41,10 +41,37 @@ Drehungen sind der klassische Stolperstein bei Bee-Bot-artigen Spielen.
 | 7–8 | 4×4 | zwei Sterne, Reihenfolge überlegen | 8–9 |
 | 9–10 | 5×5 | grösseres Feld | 9–10 |
 | 11–12 | 5×5 | drei Sterne | 10–11 |
+| 13–14 | 5×5 | 🔑 Schlüssel & Tür: erst der Schlüssel, dann öffnet die Tür | 8 |
+| 15–16 | 10×10 | ×3-Karte: die lange Treppe braucht sonst 18 Karten | 4 mit ×3×3 |
 
 Danach erzeugt das Spiel **endlos neue Aufgaben** (5×5, 2–3 Sterne). Jede wird vor
 dem Anzeigen mit einer Breitensuche geprüft: sie ist garantiert lösbar und braucht
-7–11 Karten. Alle 12 festen Aufgaben sind mit demselben Verfahren nachgerechnet.
+7–11 Karten. Alle 16 festen Aufgaben sind mit demselben Verfahren nachgerechnet.
+
+## Kürzester Weg (🎯)
+
+Über der Zielleiste steht **🎯 + Zahl**: so viele Karten braucht die kürzeste
+Lösung. Wer die Aufgabe mit genau dieser Anzahl löst, bekommt zusätzlich einen
+**Extra-Stern** („kürzester Weg +1"). Das belohnt Optimieren, ohne etwas zu
+strafen — ein Umweg gewinnt trotzdem. Die Suche versteht dabei auch die
+×3-Karte, das 🎯 zeigt also immer die wirklich kartenärmste Lösung.
+
+## Wiederhol-Karte (×3)
+
+Die ×3-Karte wiederholt **alles, was vor ihr liegt, drei Mal** (2× zusätzlich).
+Beispiel: [→, ↑, ×3] = →↑ →↑ →↑. Damit passen Wege, die ohne Wiederholung mehr
+als 12 Karten bräuchten (Stufen 15–16: die 10×10-Treppe hat 18 Züge). Zwei
+×3-Karten hintereinander verschachteln: [↑, →, ×3, ×3] = ↑→ neun Mal. Eine
+Aufführung wird bei 64 Zügen abgeschnitten, dann wackelt die letzte Karte und
+eine ruhige Stimme bittet, eine Karte wegzunehmen.
+
+## Schlüssel & Tür (🔑)
+
+Ein Feld ist verschlossen (T-Kind), der Schlüssel liegt woanders (K-Kind). Erst
+der Schlüssel — dann lässt sich die Tür passieren, sie öffnet sich sichtbar.
+Fährt der Roboter gegen die geschlossene Tür, stößt er an wie an einem Stein,
+und die Stimme erklärt es. In der Zielleiste leuchtet der Schlüssel auf, sobald
+er eingesammelt ist.
 
 ## Werkstatt (🛠 oben rechts)
 
@@ -80,16 +107,24 @@ Spiralen legen. ✖ wischt die Spur weg.
 
 - **Spielstand zurücksetzen**: die Sternenanzeige oben links 3 Sekunden gedrückt
   halten, dann Sicherheitsabfrage.
+- **🔊/🔇 oben rechts**: Ton und Sprachausgabe gemeinsam stummschalten.
 - Gespeichert wird in `localStorage` unter `sternen-roboter-spielstand`
-  (Sterne, aktuelle Aufgabe, Planeten, gewähltes Aussehen).
+  (Sterne, aktuelle Aufgabe, Planeten, gewähltes Aussehen, Ton an/aus).
 - Freischalt-Schwellen stehen in `index.html` in `ROBOTER`, `WELTEN` und
   `KARTENSTILE` (Feld `ab`) — dort lassen sie sich leicht anders takten.
+- Belohnung pro gelöster Aufgabe: 3 Sterne + 1 je eingesammeltem Stern + 1 je
+  Schlüssel + 1 für den kürzesten Weg (🎯). Fürs Probieren gibt es einmal pro
+  Aufgabe einen Trost-Stern. Sterne werden nie abgezogen.
 - Name des Kindes: in `index.html` ganz oben `const KIND = ''` — trägt man dort z. B.
   `'Sofia'` ein, wird der Name ins Lob eingebaut. Nur diese eine Stelle, damit er vor
   dem Veröffentlichen leicht wieder rausfliegt.
 - Sprachausgabe läuft über eine Warteschlange, nichts wird abgeschnitten. Ohne
   deutsche Stimme bleibt das Spiel stumm, aber vollständig spielbar — alles Wichtige
   steht auch als Bild da (Zielleiste oben zeigt Sterne ➜ Haus).
+- Noch mehr Polish: Roboter atmet im Leerlauf und tanzt beim Sieg, die gefahrene
+  Spur bleibt im Aufgabenmodus sichtbar, gesammelte Sterne sprühen Funken, das
+  Fest zeigt 3 Sterne nacheinander, und ▶ „Nochmal schauen" lässt den letzten
+  Lauf wiederholt abfahren. Auf Tablets gibt es kurze Vibrationen.
 
 ## Installieren
 
@@ -98,7 +133,8 @@ Braucht **HTTPS**, sonst gibt es keinen Service Worker und keine Installation
 
 1. Ordner z. B. auf Netlify Drop ziehen oder auf GitHub Pages legen.
 2. Auf dem Tablet in Chrome öffnen → Menü → „App installieren".
-3. Danach läuft alles offline aus dem Cache.
+3. Danach läuft alles offline aus dem Cache — inklusive der Schrift, die direkt
+   mitgeliefert wird (kein Google-Fonts-Abruf mehr).
 
 Nach **jeder** Änderung am Spiel `VERSION` in `sw.js` hochzählen, sonst zeigt das
 Tablet weiter die alte Fassung.
@@ -106,6 +142,8 @@ Tablet weiter die alte Fassung.
 ## Dateien
 
     index.html              das ganze Spiel (CSS, JS, SVG inline)
-    sw.js                   Service Worker (VERSION = v3)
+    sw.js                   Service Worker (VERSION = v4)
     manifest.webmanifest
+    fonts/                  Fredoka (Variable Font, latin) — offline eingebettet
     icons/                  192, 512, 512-maskable, 180, favicon
+    tests/                  Node-Logiktest: node tests/logik.test.mjs

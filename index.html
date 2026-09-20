@@ -5,13 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1b2547">
 <title>Sternen-Roboter</title>
+<meta name="description" content="Sternen-Roboter – Logikspiel zum Wege-Planen für Kinder ab ca. 5 Jahren. Pfeilkarten legen, den Roboter fahren lassen, Sterne einsammeln und nach Hause.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Roboter">
+<meta property="og:title" content="Sternen-Roboter">
+<meta property="og:description" content="Logikspiel zum Wege-Planen für Kinder: Pfeilkarten legen, Roboter schauen zu.">
+<meta property="og:image" content="https://pappet.github.io/sternen-roboter/icons/icon-512.png">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icons/favicon-32.png">
 <link rel="apple-touch-icon" href="./icons/icon-180.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+@font-face{
+  font-family:'Fredoka';font-style:normal;font-weight:300 700;font-display:swap;
+  src:url('./fonts/fredoka-latin.woff2') format('woff2');
+}
 :root{
   --ink:#26313D; --hell:#F2F5FF; --gold:#FFC53D; --gruen:#3DBE6E; --rot:#E4572E;
   --tuerkis:#2FB8C6; --kachel:#EAF0FF; --kachel2:#DCE5FA; --panel:rgba(255,255,255,.10);
@@ -29,8 +38,9 @@ body{
 
 /* ---------- Kopfzeile ---------- */
 header{
-  flex:none;height:62px;display:flex;align-items:center;gap:8px;
-  padding:8px 10px;z-index:6;
+  flex:none;height:calc(62px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:8px;
+  padding:calc(8px + env(safe-area-inset-top,0px)) calc(10px + env(safe-area-inset-right,0px)) 8px calc(10px + env(safe-area-inset-left,0px));
+  z-index:6;
 }
 .chip{
   background:#fff;border-radius:999px;padding:4px 14px;font-weight:700;font-size:20px;
@@ -42,7 +52,8 @@ header{
 
 /* ---------- Bühne ---------- */
 #buehne{
-  flex:1;min-height:0;overflow:hidden;display:grid;gap:8px;padding:0 10px 10px;
+  flex:1;min-height:0;overflow:hidden;display:grid;gap:8px;
+  padding:0 calc(10px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));
   grid-template-columns:1fr;
   grid-template-rows:1fr auto auto;
   grid-template-areas:"feld" "plan" "tasten";
@@ -66,6 +77,10 @@ header{
 #leiste .ic{width:32px;height:32px;opacity:.35;transition:opacity .3s,transform .3s}
 #leiste .ic.an{opacity:1;transform:scale(1.15)}
 #leiste .pfeilchen{color:#fff;opacity:.5;font-size:20px}
+.optChip{
+  background:rgba(255,255,255,.16);border-radius:999px;padding:3px 12px;
+  font-size:18px;font-weight:700;white-space:nowrap;
+}
 
 /* ---------- Spielfeld ---------- */
 #feldBox{flex:1;min-height:0;min-width:0;width:100%;overflow:hidden;display:flex;align-items:center;justify-content:center}
@@ -90,6 +105,19 @@ header{
 #roboter .koerper,#roboter .richtung{position:absolute;inset:0}
 #roboter .richtung{transition:transform .2s ease}
 #roboter svg{width:100%;height:100%;display:block}
+/* Idle: atmet leicht, wenn nichts passiert */
+#roboter .koerper{animation:idlen 3.4s ease-in-out infinite}
+@keyframes idlen{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5%)}}
+/* Sieg-Tanz: hüpfen und wiegen */
+#roboter.tanz .koerper{animation:tanz 1.5s ease}
+@keyframes tanz{
+  0%,100%{transform:none}
+  15%{transform:translateY(-18%) rotate(-8deg)}
+  30%{transform:none}
+  45%{transform:translateY(-18%) rotate(8deg)}
+  60%{transform:none}
+  78%{transform:translateY(-14%) scale(1.06)}
+}
 #roboter.bums{animation:bums .4s ease}
 @keyframes bums{0%,100%{filter:none}30%{filter:brightness(1.6) saturate(.4)}}
 .ziel-leuchten{animation:leuchten 1s ease infinite}
@@ -109,6 +137,7 @@ header{
 }
 .slot.voll{border:none;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25)}
 .slot.voll svg{width:70%;height:70%}
+.loopTxt{font-weight:700;font-size:1.6em;color:var(--karteFuell,#2E6FB7)}
 .pfeilDreh{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
 .pfeilDreh svg{display:block}
 .slot.dran{outline:4px solid var(--gold);outline-offset:2px;transform:scale(1.06)}
@@ -142,8 +171,9 @@ button.knopf svg{width:62%;height:62%}
 @keyframes puls{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .wackel{animation:wackel .6s ease 2}
 @keyframes wackel{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
-#extra{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-self:center;width:min(100%,330px)}
-#extra .knopf{font-size:30px;min-height:74px;background:#EEF2FF}
+#extra{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-self:center;width:min(100%,330px)}
+#extra .knopf{font-size:26px;min-height:74px;background:#EEF2FF}
+#b_schleife{color:var(--karteFuell,#2E6FB7);font-weight:700}
 #tasten.aus{opacity:.45;pointer-events:none}
 
 /* ---------- Startseite / Fest ---------- */
@@ -193,6 +223,21 @@ button.knopf svg{width:62%;height:62%}
 .konfetti{position:fixed;inset:0;pointer-events:none;z-index:101;overflow:hidden}
 .konf{position:absolute;font-size:28px;animation:fall 2.2s linear forwards}
 @keyframes fall{from{transform:translateY(-10vh) rotate(0)}to{transform:translateY(110vh) rotate(420deg);opacity:.2}}
+/* kleine Funken an einer Kachel (beim Einsammeln) */
+.kon.sparkle{animation:partikel .7s ease forwards!important}
+@keyframes partikel{
+  from{transform:translate(0,0) scale(.4);opacity:1}
+  to{transform:translate(var(--dx,0),var(--dy,-40px)) scale(1.1);opacity:0}
+}
+/* Sternverteilung im Fest-Overlay: drei Sterne fliegen nacheinander rein */
+.sternReihe{display:flex;gap:14px;justify-content:center}
+.festStern{width:min(17vw,86px);opacity:0;transform:scale(.2) rotate(-40deg);
+  animation:sternPop .5s cubic-bezier(.3,1.6,.5,1) var(--d,0s) forwards}
+.festStern svg{width:100%;height:auto;display:block}
+@keyframes sternPop{to{opacity:1;transform:scale(1) rotate(0)}}
+.sternMini{font-size:26px;letter-spacing:4px;opacity:.9}
+.bonusChip{background:var(--gold);color:#3a2a00;border-radius:999px;padding:8px 20px;
+  font-weight:700;font-size:20px;box-shadow:0 4px 0 rgba(0,0,0,.3)}
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
@@ -204,6 +249,7 @@ button.knopf svg{width:62%;height:62%}
     <button class="chip" id="punkteChip">⭐ <b id="punkte">0</b></button>
     <button class="chip" id="aufgabeChip">🏁 <b id="aufgabe">1</b></button>
     <div id="spacer"></div>
+    <button class="chip" id="ton" aria-label="Ton an oder aus">🔊</button>
     <button class="chip" id="werkstattChip" aria-label="Werkstatt">🛠</button>
     <button class="chip" id="freiChip" aria-label="Freies Fahren">🪐</button>
     <button class="chip" id="fs" aria-label="Vollbild">⛶</button>
@@ -224,6 +270,7 @@ button.knopf svg{width:62%;height:62%}
         <button class="knopf pfeil" data-d="2" aria-label="nach unten"></button>
       </div>
       <div id="extra">
+        <button class="knopf" id="b_schleife" aria-label="Wiederhol-Karte ×3">×3</button>
         <button class="knopf" id="b_undo" aria-label="letzte Karte weg">↩</button>
         <button class="knopf" id="b_clear" aria-label="alle Karten weg">✖</button>
         <button class="knopf" id="b_hoer" aria-label="nochmal anhören">🔊</button>
@@ -244,6 +291,7 @@ button.knopf svg{width:62%;height:62%}
   <div class="gross" id="festBild"></div>
   <h1 id="festText">Geschafft!</h1>
   <button class="grossKnopf" id="weiter">Weiter</button>
+  <button class="kleinKnopf" id="nochmal">▶ Nochmal schauen</button>
   <button class="kleinKnopf" id="wKnopf" hidden>🛠 Werkstatt öffnen</button>
 </div>
 
@@ -258,12 +306,13 @@ button.knopf svg{width:62%;height:62%}
    Sternen-Roboter — Wege planen mit Pfeilkarten
    Eine Datei, keine Bibliotheken. Name des Kindes: nur in KIND.
    ========================================================================= */
+/* ==== TESTBLOCK-START (nur Logik, keine DOM-Zugriffe) ==== */
 const KIND = '';                      // z.B. 'Sofia' — wird ins Lob eingebaut
 const SAVE_KEY = 'sternen-roboter-spielstand';
 const MAX_KARTEN = 12;
 const $ = id => document.getElementById(id);
 
-const S = {sterne:0, aufgabe:0, sammlung:0, busy:false, frei:false, trostGegeben:false,
+const S = {sterne:0, aufgabe:0, sammlung:0, busy:false, frei:false, trostGegeben:false, ton:true,
            look:{bot:'tuerkis', welt:'weltraum', karte:'blau'}, neuOffen:[]};
 
 function load(){
@@ -274,7 +323,7 @@ function load(){
   }catch(e){}
 }
 function save(){ try{ localStorage.setItem(SAVE_KEY,
-  JSON.stringify({sterne:S.sterne, aufgabe:S.aufgabe, sammlung:S.sammlung, look:S.look})); }catch(e){} }
+  JSON.stringify({sterne:S.sterne, aufgabe:S.aufgabe, sammlung:S.sammlung, look:S.look, ton:S.ton})); }catch(e){} }
 
 /* ---------------------------------------------------------------- Ton --- */
 let AC = null;
@@ -284,6 +333,7 @@ function ac(){
   return AC;
 }
 function tone(f, d=.12, type='sine', vol=.16, delay=0, slide=0){
+  if(S.ton === false) return;
   const a = ac(); if(!a) return;
   const t = a.currentTime + delay;
   const o = a.createOscillator(), g = a.createGain();
@@ -297,14 +347,19 @@ function tone(f, d=.12, type='sine', vol=.16, delay=0, slide=0){
 }
 const SFX = {
   karte: d => tone([680,600,520,760][d], .07, 'triangle', .13),
-  schritt: () => tone(360, .07, 'sine', .10),
+  loop:  () => tone(440, .16, 'triangle', .13, 0, 1.5),      // ×3-Karte: aufsteigender Wisch
+  schritt: () => tone([340,365,325,380,350][(Math.random()*5)|0], .07, 'sine', .10),
   pop:   () => tone(520, .1, 'sine', .2, 0, 1.8),
   klick: () => tone(700, .06, 'triangle', .12),
   nope:  () => tone(210, .14, 'square', .05),
   ding:  () => { tone(1318,.4,'sine',.15); tone(1760,.5,'sine',.1,.08); },
+  sternPop: i => tone(988 + i*222, .28, 'sine', .16, i*.33),  // Stern fliegt ins Fest
   jubel: () => [523,659,784,1047].forEach((f,i) => tone(f,.2,'triangle',.16,i*.1)),
+  tanz:  () => [660,880,990,1320].forEach((f,i) => tone(f,.15,'triangle',.15,i*.18)),
   fest:  () => [523,659,784,1047,1319].forEach((f,i) => tone(f,.28,'triangle',.15,i*.12))
 };
+/* Kurze Vibration, falls das Gerät es kann (Tablet) */
+function vib(m){ try{ navigator.vibrate && navigator.vibrate(m); }catch(e){} }
 
 /* -------------------------------------------------------- Sprachausgabe -- */
 const Voice = (() => {
@@ -341,7 +396,10 @@ const Voice = (() => {
     playing = false;
   }
   return {
-    say(items){ queue.push(...[].concat(items).filter(Boolean)); run(); },
+    say(items){
+      if(typeof S !== 'undefined' && S.ton === false) return;   // 🔇: gar nicht erst anstehen
+      queue.push(...[].concat(items).filter(Boolean)); run();
+    },
     flush(){ epoch++; queue = []; playing = false; if(HAS) speechSynthesis.cancel(); },
     replace(items){ this.flush(); this.say(items); }
   };
@@ -414,6 +472,20 @@ const SVG_LEBKUCHENHAUS = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2
 const SVG_PFEIL = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
   <path d="M50 10 L84 48 L64 48 L64 90 L36 90 L36 48 L16 48 Z"
     fill="var(--karteFuell,#2E6FB7)" stroke="var(--karteRand,#1B4B80)" stroke-width="5" stroke-linejoin="round"/></svg>`;
+const SVG_SCHLUESSEL = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="30" cy="38" r="16" fill="none" stroke="#FFC53D" stroke-width="10"/>
+  <path d="M42 50 L78 86" stroke="#FFC53D" stroke-width="10" stroke-linecap="round"/>
+  <path d="M64 72 L74 62" stroke="#E09B00" stroke-width="8" stroke-linecap="round"/>
+  <path d="M74 82 L84 72" stroke="#E09B00" stroke-width="8" stroke-linecap="round"/></svg>`;
+const SVG_TUER = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="8" width="60" height="84" rx="8" fill="#8A5A28" stroke="#5E3C16" stroke-width="5"/>
+  <rect x="30" y="18" width="40" height="64" rx="5" fill="#B07A3C"/>
+  <circle cx="62" cy="50" r="5" fill="#FFC53D"/></svg>`;
+const SVG_TUER_OFFEN = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="8" width="60" height="84" rx="8" fill="#8A5A28" stroke="#5E3C16" stroke-width="5"/>
+  <rect x="30" y="18" width="40" height="64" rx="5" fill="#3A2A10"/>
+  <circle cx="62" cy="50" r="5" fill="#FFC53D"/>
+  <path d="M50 30 L64 44 L50 58" stroke="#FFC53D" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const SVG_PLAY = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
   <path d="M26 16 L86 50 L26 84 Z" fill="#fff"/></svg>`;
 const pfeilIcon = d => `<span class="pfeilDreh" style="transform:rotate(${d*90}deg)">${SVG_PFEIL}</span>`;
@@ -432,53 +504,150 @@ const LEVELS = [
   {g:["...##",".#.*#",".R...","...*.","Z#..."],   sag:"Hol beide Sterne und fahr dann zum Haus.", neu:"Neu: ein größeres Feld!"},
   {g:["Z.*..",".###.",".....","##...","#.R*."],   sag:"Hol beide Sterne und fahr dann zum Haus."},
   {g:["##.*#",".*.Z.","*....","#..##","R...."],   sag:"Hol alle drei Sterne und fahr dann zum Haus.", neu:"Neu: drei Sterne! Hol alle drei."},
-  {g:["#.*..",".#...","##R#.",".#.*.","*Z..#"],   sag:"Hol alle drei Sterne und fahr dann zum Haus."}
+  {g:["#.*..",".#...","##R#.",".#.*.","*Z..#"],   sag:"Hol alle drei Sterne und fahr dann zum Haus."},
+  {g:["R.T.Z",".#.#.","..K..",".....","....."],   sag:"Die Tür ist zu. Hol erst den Schlüssel, dann fahr zum Haus.",
+   neu:"Neu: eine Tür! Sie ist zu. Der Roboter braucht erst den Schlüssel."},
+  {g:["R.T.Z",".#.#.","..K*.",".....","....."],   sag:"Hol den Schlüssel und den Stern, dann fahr zum Haus."},
+  {g:[".........Z","..........",".......*..","..........","..........","....*.....","..........","..........","..........","R........."],
+   sag:"Fahr die lange Treppe hinauf zum Haus. Die ×3-Karte wiederholt deine Karten drei Mal.",
+   neu:"Neu: die ×3-Karte! Sie wiederholt alles, was vor ihr liegt, drei Mal."},
+  {g:["R.........","..........","..........","..........","....*.....","..........","..........",".......*..","..........",".........Z"],
+   sag:"Fahr die lange Treppe hinunter zum Haus. Mit der ×3-Karte passen die Karten sonst nicht."}
 ];
 
 /* Aktuelles Level als Objekt */
-let L = null;           // {rows,cols,wall:Set,start:{r,c},ziel:{r,c},sterne:[{r,c}]}
-let prog = [];          // Programm: Richtungen 0..3
+let L = null;           // {rows,cols,wall,start,ziel,sterne,schluessel,tuer,opt,sag,neu}
+let prog = [];          // Programm: 0..3 = Pfeil, 'x' = ×3-Karte
 let bot = {r:0,c:0,d:0};
-let geholt = new Set(); // Index der eingesammelten Sterne im laufenden Versuch
+let mask = 0;           // eingesammelte Sterne + Schlüssel als Bits (laufender Versuch)
 const DIRS = [[-1,0],[0,1],[1,0],[0,-1]];
+const EXP_CAP = 64;     // maximale Aufführungslänge (Schutz vor ×3-Kaskaden)
 
 function parse(g){
-  const lvl = {rows:g.length, cols:g[0].length, wall:new Set(), sterne:[], start:null, ziel:null};
+  const lvl = {rows:g.length, cols:g[0].length, wall:new Set(), sterne:[],
+               start:null, ziel:null, schluessel:null, tuer:null};
   g.forEach((zeile,r) => [...zeile].forEach((ch,c) => {
     if(ch === '#') lvl.wall.add(r+','+c);
     else if(ch === '*') lvl.sterne.push({r,c});
     else if(ch === 'R') lvl.start = {r,c};
     else if(ch === 'Z') lvl.ziel = {r,c};
+    else if(ch === 'K') lvl.schluessel = {r,c};
+    else if(ch === 'T') lvl.tuer = {r,c};
   }));
   return lvl;
 }
 const frei = (r,c) => r>=0 && c>=0 && r<L.rows && c<L.cols && !L.wall.has(r+','+c);
-
-/* --------------------------------------------------- Lösung suchen (BFS) - */
-function loesung(startR, startC, maskStart){
-  const ziel = (1 << L.sterne.length) - 1;
-  const key = (r,c,m) => r+'|'+c+'|'+m;
-  const q = [{r:startR, c:startC, m:maskStart, weg:[]}];
-  const gesehen = new Set([key(startR,startC,maskStart)]);
+const keyBit = () => L.schluessel ? (1 << L.sterne.length) : 0;
+const maskZiel = () => ((1 << L.sterne.length) - 1) | keyBit();
+/* Die Tür ist nur passierbar, wenn der Schlüssel schon eingesammelt ist */
+function passierbar(r,c,m){
+  if(!frei(r,c)) return false;
+  if(L.tuer && L.tuer.r === r && L.tuer.c === c && !(m & keyBit())) return false;
+  return true;
+}
+/* Ein Zug von (r,c) in Richtung d; null bei Wand oder verschlossener Tür */
+function schrittVon(r,c,d,m){
+  const nr = r + DIRS[d][0], nc = c + DIRS[d][1];
+  if(!passierbar(nr,nc,m)) return null;
+  let mm = m;
+  const si = L.sterne.findIndex(s => s.r === nr && s.c === nc);
+  if(si >= 0) mm |= (1 << si);
+  if(L.schluessel && L.schluessel.r === nr && L.schluessel.c === nc) mm |= keyBit();
+  return {r:nr, c:nc, mask:mm};
+}
+/* ×3-Karte: wiederholt alles, was vor ihr liegt, drei Mal (also 2× zusätzlich) */
+function expandiere(karten){
+  let exp = [], map = [];   // map: von welchem Bauplan-Slot stammt jeder gespielte Zug
+  for(let slot=0; slot<karten.length; slot++){
+    const k = karten[slot];
+    if(k === 'x'){
+      if(!exp.length) continue;                 // ×3 ganz vorne: keine Wirkung
+      if(exp.length*3 > EXP_CAP) return null;   // zu lang für eine Aufführung
+      exp = exp.concat(exp, exp);
+      map = map.concat(map, map);
+    }else{ exp.push(k); map.push(slot); }
+  }
+  return {exp, map};
+}
+/* Breitensuche über Züge (0..3); Zustand = Position + Sammel-Maske */
+function bfs(sR, sC, maskStart){
+  const startKey = sR+','+sC+','+maskStart;
+  const map = new Map([[startKey, {r:sR, c:sC, mask:maskStart, dist:0, weg:[]}]]);
+  const q = [startKey];
   while(q.length){
-    const k = q.shift();
-    if(k.m === ziel && k.r === L.ziel.r && k.c === L.ziel.c) return k.weg;
-    if(k.weg.length > MAX_KARTEN) continue;
+    const st = map.get(q.shift());
     for(let d=0; d<4; d++){
-      const r = k.r + DIRS[d][0], c = k.c + DIRS[d][1];
-      if(!frei(r,c)) continue;
-      let m = k.m;
-      const si = L.sterne.findIndex(s => s.r === r && s.c === c);
-      if(si >= 0) m |= (1 << si);
-      const kk = key(r,c,m);
-      if(gesehen.has(kk)) continue;
-      gesehen.add(kk);
-      q.push({r, c, m, weg:[...k.weg, d]});
+      const s = schrittVon(st.r, st.c, d, st.mask);
+      if(!s) continue;
+      const kk = s.r+','+s.c+','+s.mask;
+      if(map.has(kk)) continue;
+      map.set(kk, {r:s.r, c:s.c, mask:s.mask, dist:st.dist+1, weg:[...st.weg, d]});
+      q.push(kk);
     }
   }
-  return null;
+  return map;
 }
-function maskeJetzt(){ let m = 0; geholt.forEach(i => m |= (1<<i)); return m; }
+/* Kürzeste Lösung nur mit Pfeilen */
+function loesung(startR, startC, maskStart){
+  const hit = bfs(startR, startC, maskStart).get(L.ziel.r+','+L.ziel.c+','+maskZiel());
+  return hit ? hit.weg : null;
+}
+/* Suche nach KARTEN (Pfeile oder ×3). Ohne ×3 reicht die klassische BFS; die
+   ×3-Variante kombiniert „Weg A + ×3 + Weg B": A wird dreimal gefahren, dann B.
+   An Zwischenstellen ändert ×3 die Stellung nicht (A endet wieder bei A), darum
+   genügt es, für jede erreichbare Stellung |A| + 1 + dist(B) zu prüfen. */
+function planBFS(startR, startC, maskStart){
+  const zielKey = L.ziel.r+','+L.ziel.c+','+maskZiel();
+  const fwd = bfs(startR, startC, maskStart);
+  const direkt = fwd.get(zielKey);
+  let best = direkt ? {karten: direkt.weg} : null;
+  // Muster 1: „Weg A + ×3 + Weg B" — A wird dreimal gefahren, dann B
+  const cache = new Map();
+  fwd.forEach(st => {
+    if(st.dist + 1 >= MAX_KARTEN) return;                     // dann passt B nicht mehr
+    if(best && st.dist + 2 >= best.karten.length) return;     // kann nicht kürzer werden
+    let b = cache.get(st);
+    if(b === undefined){
+      const hit = bfs(st.r, st.c, st.mask).get(zielKey);
+      b = hit ? hit.weg : null;
+      cache.set(st, b);
+    }
+    if(!b) return;
+    const tot = st.dist + 1 + b.length;
+    if(tot <= MAX_KARTEN && (!best || tot < best.karten.length))
+      best = {karten: [...st.weg, 'x', ...b]};
+  });
+  // Muster 2: „Weg A + ×3 + ×3" — A wird neunmal gefahren (verschachtelte Wiederholung)
+  fwd.forEach(st => {
+    if(st.dist > 7 || 9*st.dist > EXP_CAP) return;
+    if(best && st.dist + 2 >= best.karten.length) return;
+    let r = st.r, c = st.c, m = st.mask, ok = true;
+    for(let p=0; p<8 && ok; p++){                             // 8 weitere Durchläufe von A
+      for(const d of st.weg){
+        const s = schrittVon(r,c,d,m);
+        if(!s){ ok = false; break; }
+        r = s.r; c = s.c; m = s.mask;
+      }
+    }
+    if(ok && r === L.ziel.r && c === L.ziel.c && m === maskZiel()){
+      const karten = [...st.weg, 'x', 'x'];
+      if(!best || karten.length < best.karten.length) best = {karten};
+    }
+  });
+  return best ? best.karten : null;
+}
+/* Wo steht der Roboter nach dem bisherigen Programm? (für Tipps) */
+function simuliere(karten){
+  const ex = expandiere(karten);
+  if(!ex) return {zuLang:true};
+  let r = L.start.r, c = L.start.c, m = 0;
+  for(const d of ex.exp){
+    const s = schrittVon(r,c,d,m);
+    if(!s) return {r, c, mask:m, bums:true};
+    r = s.r; c = s.c; m = s.mask;
+  }
+  return {r, c, mask:m};
+}
 
 /* ----------------------------------------------- Zufallslevel (endlos) --- */
 function zufallsLevel(){
@@ -504,6 +673,7 @@ function zufallsLevel(){
   return LEVELS[LEVELS.length-1];
 }
 function levelDaten(i){ return i < LEVELS.length ? LEVELS[i] : zufallsLevel(); }
+/* ==== TESTBLOCK-ENDE ==== */
 
 /* ------------------------------------------------------------- Aufbau --- */
 function baueFeld(){
@@ -515,6 +685,8 @@ function baueFeld(){
     k.dataset.rc = r+','+c;
     if(L.wall.has(r+','+c)){ k.classList.add('stein'); k.innerHTML = gewaehlt('welt').stein(); }
     else if(L.ziel && L.ziel.r === r && L.ziel.c === c){ k.innerHTML = gewaehlt('welt').ziel(); k.classList.add('ziel-leuchten'); }
+    else if(L.tuer && L.tuer.r === r && L.tuer.c === c){ k.innerHTML = SVG_TUER; }
+    else if(L.schluessel && L.schluessel.r === r && L.schluessel.c === c){ k.dataset.schluessel = '1'; k.innerHTML = SVG_SCHLUESSEL; }
     feld.appendChild(k);
   }
   L.sterne.forEach((s,i) => {
@@ -567,10 +739,12 @@ function zeichneLeiste(){
   const l = $('leiste');
   if(S.frei){ l.innerHTML = '<span style="font-size:26px">🪐 ✨ 🪐</span>'; return; }   // kein Lesetext
   let h = '';
+  if(L.opt) h += `<span class="optChip" title="kürzeste Lösung">🎯 ${L.opt}</span>`;
+  if(L.schluessel) h += `<span class="ic ${(mask & keyBit()) ? 'an' : ''}" data-s="k">${SVG_SCHLUESSEL}</span>`;
   L.sterne.forEach((_,i) => {
-    h += `<span class="ic ${geholt.has(i)?'an':''}" data-s="${i}">${SVG_STERN}</span>`;
+    h += `<span class="ic ${(mask & (1<<i)) ? 'an' : ''}" data-s="${i}">${SVG_STERN}</span>`;
   });
-  if(L.sterne.length) h += '<span class="pfeilchen">➜</span>';
+  if(L.sterne.length || L.schluessel) h += '<span class="pfeilchen">➜</span>';
   h += `<span class="ic an">${gewaehlt('welt').ziel()}</span>`;
   l.innerHTML = h;
 }
@@ -585,7 +759,7 @@ function zeichnePlan(neuIdx = -1){
     const d = document.createElement('div');
     d.className = 'slot' + (i < prog.length ? ' voll' : '') + (i === neuIdx ? ' neu' : '');
     d.dataset.i = i;
-    if(i < prog.length) d.innerHTML = pfeilIcon(prog[i]);
+    if(i < prog.length) d.innerHTML = prog[i] === 'x' ? '<span class="loopTxt">×3</span>' : pfeilIcon(prog[i]);
     p.appendChild(d);
   }
   $('b_los').classList.toggle('bereit', prog.length > 0 && !S.busy);
@@ -602,38 +776,40 @@ function tippGeben(){
   if(S.busy || S.frei) return;
   // Wo steht der Roboter nach dem bisherigen Programm?
   const sim = simuliere(prog);
-  if(sim.bums){
+  if(sim.zuLang){
+    $('b_undo').classList.add('wackel');
+    setTimeout(() => $('b_undo').classList.remove('wackel'), 1300);
+    Voice.replace({text:'Das ist zu lang. Nimm eine Karte weg.'});
+  }else if(sim.bums){
     $('b_undo').classList.add('wackel');
     setTimeout(() => $('b_undo').classList.remove('wackel'), 1300);
     Voice.replace({text:'Da ist eine Karte zu viel. Tipp auf den Pfeil zurück.'});
   }else{
-    const lsg = loesung(sim.r, sim.c, sim.mask);
+    let lsg = planBFS(sim.r, sim.c, sim.mask);
+    // Liegt schon eine ×3 im Bauplan, kann das Anhängen von ×3 den Rest erledigen
+    if(prog.includes('x')){
+      const mitX = simuliere([...prog, 'x']);
+      if(!mitX.zuLang && !mitX.bums && mitX.mask === maskZiel() && mitX.r === L.ziel.r && mitX.c === L.ziel.c)
+        lsg = ['x'];
+    }
     if(lsg && lsg.length){
-      const taste = document.querySelector(`.pfeil[data-d="${lsg[0]}"]`);
+      const erster = lsg[0];
+      const taste = erster === 'x' ? $('b_schleife')
+        : document.querySelector(`.pfeil[data-d="${erster}"]`);
       if(taste){ taste.classList.add('wackel'); setTimeout(() => taste.classList.remove('wackel'), 1300); }
-      Voice.replace({text: L.sterne.length && sim.mask !== (1<<L.sterne.length)-1
+      Voice.replace({text: sim.mask !== maskZiel()
         ? 'Denk an die Sterne. Probier diesen Pfeil.' : 'Probier diesen Pfeil.'});
     }
   }
   tippPlanen();
 }
-function simuliere(karten){
-  let r = L.start.r, c = L.start.c, mask = 0, bums = false;
-  for(const d of karten){
-    const nr = r + DIRS[d][0], nc = c + DIRS[d][1];
-    if(!frei(nr,nc)){ bums = true; break; }
-    r = nr; c = nc;
-    const si = L.sterne.findIndex(s => s.r === r && s.c === c);
-    if(si >= 0) mask |= (1<<si);
-  }
-  return {r, c, mask, bums};
-}
-
 function neueAufgabe(){
   const daten = levelDaten(S.aufgabe);
   L = parse(daten.g);
   L.sag = daten.sag; L.neu = daten.neu;
-  prog = []; geholt = new Set(); S.trostGegeben = false;
+  const plan = planBFS(L.start.r, L.start.c, 0);
+  L.opt = plan ? plan.length : 0;
+  prog = []; mask = 0; S.trostGegeben = false;
   bot = {r:L.start.r, c:L.start.c, d:1};
   $('aufgabe').textContent = S.aufgabe + 1;
   baueFeld(); zeichneLeiste(); zeichnePlan();
@@ -648,7 +824,7 @@ function freiesFahren(){
   S.frei = true;
   L = parse(Array.from({length:5}, () => '.....'));
   L.start = {r:2,c:2}; L.ziel = null; L.sterne = [];
-  prog = []; geholt = new Set();
+  prog = []; mask = 0;
   bot = {r:2,c:2,d:1};
   $('aufgabe').textContent = '🪐';
   baueFeld(); zeichneLeiste(); zeichnePlan();
@@ -658,7 +834,8 @@ function freiesFahren(){
 
 function karteDazu(d){
   if(S.busy || prog.length >= MAX_KARTEN){ if(prog.length >= MAX_KARTEN) SFX.nope(); return; }
-  ac(); prog.push(d); SFX.karte(d);
+  ac(); prog.push(d);
+  if(d === 'x') SFX.loop(); else SFX.karte(d);
   zeichnePlan(prog.length-1);
   tippPlanen();
 }
@@ -669,6 +846,27 @@ function karteWeg(i){
 }
 
 const warte = ms => new Promise(r => setTimeout(r, ms));
+
+/* Kleine Funken an einer Kachel (beim Einsammeln) */
+function partikel(el, zeichen = '✨', n = 5){
+  const a = el.getBoundingClientRect();
+  const box = document.createElement('div');
+  box.className = 'konfetti';
+  for(let i=0;i<n;i++){
+    const s = document.createElement('div');
+    s.className = 'kon sparkle';
+    s.textContent = zeichen;
+    s.style.left = (a.left + a.width/2 - 12) + 'px';
+    s.style.top  = (a.top + a.height/2 - 12) + 'px';
+    s.style.fontSize = '22px';
+    const w = (Math.random()*Math.PI*2);
+    s.style.setProperty('--dx', Math.round(Math.cos(w)*46) + 'px');
+    s.style.setProperty('--dy', Math.round(Math.sin(w)*46 - 34) + 'px');
+    box.appendChild(s);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 900);
+}
 
 /* Eingesammelter Stern fliegt sichtbar in die Zielleiste */
 function sternFliegt(vonKachel, index){
@@ -692,70 +890,110 @@ function sternFliegt(vonKachel, index){
 
 async function starten(){
   if(S.busy || !prog.length) return;
+  const ex = expandiere(prog);
+  if(!ex){
+    ac(); SFX.nope(); vib(40);
+    const letzter = $('plan').children[prog.length-1];
+    if(letzter){ letzter.classList.add('wackel'); setTimeout(() => letzter.classList.remove('wackel'), 1300); }
+    Voice.replace({text:'Das ist zu lang für eine Fahrt. Nimm eine Karte weg.'});
+    tippPlanen();
+    return;
+  }
   ac(); clearTimeout(tippTimer);
   S.busy = true; $('tasten').classList.add('aus');
   $('b_los').classList.remove('bereit');
-  if(!S.frei){                       // Aufgabe: Roboter zurück auf Start
-    geholt = new Set();
+  if(!S.frei){                       // Aufgabe: alles zurück auf Anfang
+    mask = 0;
     bot = {r:L.start.r, c:L.start.c, d:bot.d};
     setzeRoboter(false);
+    L.sterne.forEach((s,i) => {
+      const k = $('feld').querySelector(`[data-stern="${i}"]`);
+      if(k) k.innerHTML = SVG_STERN;
+    });
+    const sk = $('feld').querySelector('[data-schluessel]');
+    if(sk) sk.innerHTML = SVG_SCHLUESSEL;
+    const tk = L.tuer && $('feld').querySelector(`[data-rc="${L.tuer.r},${L.tuer.c}"]`);
+    if(tk) tk.innerHTML = SVG_TUER;
+    $('feld').querySelectorAll('.spur').forEach(k => k.classList.remove('spur'));
   }
-  L.sterne.forEach((s,i) => {
-    const k = $('feld').querySelector(`[data-stern="${i}"]`);
-    if(k){ k.innerHTML = SVG_STERN; k.firstElementChild.classList.remove('weg'); }
-  });
   zeichneLeiste();
   await warte(350);
+  [...$('plan').children].forEach(s => s.classList.remove('fehler'));
 
-  let gebumst = false, fehlerIdx = -1;
-  for(let i=0;i<prog.length;i++){
+  let gebumst = false, fehlerIdx = -1, tuerZu = false;
+  for(let i=0;i<ex.exp.length;i++){
+    const slot = ex.map[i];
     const slots = $('plan').children;
-    [...slots].forEach(s => s.classList.remove('dran','fehler'));
-    slots[i].classList.add('dran');
-    const d = prog[i];
+    [...slots].forEach(s => s.classList.remove('dran'));
+    slots[slot].classList.add('dran');
+    const d = ex.exp[i];
     const nr = bot.r + DIRS[d][0], nc = bot.c + DIRS[d][1];
     bot.d = d;
-    if(!frei(nr,nc)){
-      if(!S.frei) slots[i].classList.add('fehler');
-      fehlerIdx = i;
+    const verschlossen = L.tuer && nr === L.tuer.r && nc === L.tuer.c && !(mask & keyBit());
+    if(!frei(nr,nc) || verschlossen){
+      if(!S.frei){ slots[slot].classList.add('fehler'); fehlerIdx = slot; tuerZu = verschlossen; }
       $('roboter').classList.add('bums');
-      setzeRoboter(true); SFX.nope();
+      setzeRoboter(true); SFX.nope(); vib(35);
       await warte(450);
       $('roboter').classList.remove('bums');
       gebumst = true; break;
     }
     bot.r = nr; bot.c = nc;
-    if(S.frei){
-      const k = $('feld').querySelector(`[data-rc="${nr},${nc}"]`);
-      if(k) k.classList.add('spur');
-    }
+    const k = $('feld').querySelector(`[data-rc="${nr},${nc}"]`);
+    if(k) k.classList.add('spur');       // Spur auch im Aufgabenmodus
     setzeRoboter(true); SFX.schritt();
     await warte(330);
-    const si = L.sterne.findIndex(s => s.r === bot.r && s.c === bot.c);
-    if(si >= 0 && !geholt.has(si)){
-      geholt.add(si);
-      const k = $('feld').querySelector(`[data-stern="${si}"]`);
-      if(k){ sternFliegt(k, si); k.innerHTML = ''; }   // Stern ist weg vom Feld
-      SFX.ding();
-      setTimeout(zeichneLeiste, 420);                  // oben leuchtet er auf, wenn er ankommt
-      await warte(200);
-    }
+    mask = sammle(mask);
   }
   [...$('plan').children].forEach(s => s.classList.remove('dran'));
 
   if(S.frei){ S.busy = false; $('tasten').classList.remove('aus'); zeichnePlan(); return; }
 
-  const alleSterne = geholt.size === L.sterne.length;
+  if(S.replay){                        // „Nochmal schauen": gleicher Lauf, keine Belohnung
+    S.replay = false;
+    const nochmalGewonnen = !gebumst && mask === maskZiel() && bot.r === L.ziel.r && bot.c === L.ziel.c;
+    S.busy = false; $('tasten').classList.remove('aus'); zeichnePlan();
+    if(nochmalGewonnen){ SFX.jubel(); zeigeFest(festInfo.gross, festInfo.optimal); }
+    return;
+  }
+
+  const alleSachen = mask === maskZiel();
   const amZiel = L.ziel && bot.r === L.ziel.r && bot.c === L.ziel.c;
-  if(!gebumst && alleSterne && amZiel) gewonnen();
-  else fastGeschafft(gebumst, alleSterne, fehlerIdx);
+  if(!gebumst && alleSachen && amZiel) await gewonnen();
+  else fastGeschafft(gebumst, tuerZu, alleSachen, fehlerIdx);
 }
 
-function fastGeschafft(gebumst, alleSterne, fehlerIdx){
+/* Stern und Schlüssel an der aktuellen Position einsammeln */
+function sammle(m){
+  const si = L.sterne.findIndex(s => s.r === bot.r && s.c === bot.c);
+  if(si >= 0 && !(m & (1<<si))){
+    m |= (1 << si);
+    const k = $('feld').querySelector(`[data-stern="${si}"]`);
+    if(k){ sternFliegt(k, si); partikel(k); k.innerHTML = ''; }
+    SFX.ding(); vib(15);
+    setTimeout(zeichneLeiste, 420);
+  }
+  if(L.schluessel && L.schluessel.r === bot.r && L.schluessel.c === bot.c && !(m & keyBit())){
+    m |= keyBit();
+    const k = $('feld').querySelector('[data-schluessel]');
+    if(k){ sternFliegt(k, 'k'); partikel(k); k.innerHTML = ''; }
+    SFX.pop(); vib(15);
+    if(L.tuer){
+      const tk = $('feld').querySelector(`[data-rc="${L.tuer.r},${L.tuer.c}"]`);
+      if(tk) tk.innerHTML = SVG_TUER_OFFEN;
+    }
+    Voice.say({text:'Der Schlüssel! Jetzt ist die Tür offen.'});
+    setTimeout(zeichneLeiste, 420);
+  }
+  return m;
+}
+
+function fastGeschafft(gebumst, tuerZu, alleSachen, fehlerIdx){
   S.busy = false; $('tasten').classList.remove('aus');
   let text;
-  if(gebumst) text = 'Ups, da war ein Hindernis. Nimm die rote Karte weg und probier eine andere.';
-  else if(!alleSterne) text = 'Fast! Es fehlt noch ein Stern. Ändere deinen Weg.';
+  if(tuerZu) text = 'Die Tür ist zu. Der Roboter braucht erst den Schlüssel.';
+  else if(gebumst) text = 'Ups, da war ein Hindernis. Nimm die rote Karte weg und probier eine andere.';
+  else if(!alleSachen) text = 'Fast! Es fehlt noch etwas. Ändere deinen Weg.';
   else text = 'Fast! Der Roboter steht noch nicht beim Haus. Häng noch eine Karte an.';
   Voice.replace({text});
   if(!S.trostGegeben){           // kleine Belohnung fürs Probieren, nur einmal
@@ -776,22 +1014,30 @@ function sterneDazu(n, gross){
   setTimeout(() => $('punkteChip').style.transform = '', 220);
 }
 
-function gewonnen(){
-  SFX.jubel();
-  const belohnung = 3 + L.sterne.length;
+let festInfo = {gross:false, optimal:false};
+async function gewonnen(){
+  const optimal = !!L.opt && prog.length <= L.opt;
+  $('roboter').classList.add('tanz');
+  SFX.tanz(); vib([30,60,30,60,80]);
+  await warte(1500);
+  $('roboter').classList.remove('tanz');
+  const belohnung = 3 + L.sterne.length + (L.schluessel ? 1 : 0) + (optimal ? 1 : 0);
   sterneDazu(belohnung, true);
   S.aufgabe += 1; save();
   const rundeFertig = S.aufgabe % 4 === 0;
   if(rundeFertig){ S.sammlung += 1; save(); }
   const lob = KIND ? `Super, ${KIND}!` : 'Super gemacht!';
-  Voice.replace({text: rundeFertig
+  let text = rundeFertig
     ? `${lob} Eine ganze Runde geschafft. Du bekommst einen neuen Planeten.`
-    : `${lob} Der Roboter ist zu Hause.`});
-  zeigeFest(rundeFertig);
+    : `${lob} Der Roboter ist zu Hause.`;
+  if(optimal) text += ' Und das war der kürzeste Weg. Dafür gibt es einen Extra-Stern!';
+  Voice.replace({text});
+  festInfo = {gross:rundeFertig, optimal};
+  zeigeFest(rundeFertig, optimal);
 }
 
 const PLANETEN = ['🪐','🌙','☄️','🌍','🚀','🛸','🌟','🌈','🌞','🦄','🐙','🍭'];
-function zeigeFest(gross){
+function zeigeFest(gross, optimal){
   const f = $('fest');
   const neu = S.neuOffen.length ? S.neuOffen[0] : null;
   if(neu){
@@ -800,9 +1046,17 @@ function zeigeFest(gross){
     $('wKnopf').hidden = false;
     Voice.say({text:'Etwas Neues ist in der Werkstatt. Schau mal rein!'});
   }else{
-    $('festBild').innerHTML = gross
-      ? `<div style="font-size:min(30vw,150px)">${PLANETEN[(S.sammlung-1) % PLANETEN.length]}</div>`
-      : SVG_STERN;
+    if(gross){
+      $('festBild').innerHTML = `<div style="font-size:min(30vw,150px)">${PLANETEN[(S.sammlung-1) % PLANETEN.length]}</div>`;
+    }else{
+      let h = '<div class="sternReihe">' + [0,1,2].map(i =>
+        `<span class="festStern" style="--d:${(i*.33).toFixed(2)}s">${SVG_STERN}</span>`).join('') + '</div>';
+      [0,1,2].forEach(i => SFX.sternPop(i));           // Plings passend zum Einfliegen
+      const extras = L.sterne.length + (L.schluessel ? 1 : 0);
+      if(extras) h += `<div class="sternMini">${'⭐'.repeat(extras)}</div>`;
+      if(optimal) h += `<div class="bonusChip">✨ kürzester Weg +1</div>`;
+      $('festBild').innerHTML = h;
+    }
     $('festText').textContent = gross ? 'Runde geschafft!' : 'Geschafft!';
     $('wKnopf').hidden = true;
   }
@@ -938,6 +1192,7 @@ document.querySelectorAll('.pfeil').forEach(b => {
 });
 $('b_los').innerHTML = SVG_PLAY;
 $('b_los').addEventListener('click', starten);
+$('b_schleife').addEventListener('click', () => karteDazu('x'));
 $('b_undo').addEventListener('click', () => karteWeg());
 $('b_clear').addEventListener('click', () => {
   if(S.busy) return;
@@ -979,6 +1234,18 @@ $('weiter').addEventListener('click', () => {
   ac(); $('fest').hidden = true; S.neuOffen = [];
   if(S.frei) freiesFahren(); else neueAufgabe();
 });
+/* Sieg noch einmal ansehen: gleicher Lauf, keine doppelte Belohnung */
+$('nochmal').addEventListener('click', async () => {
+  ac(); $('fest').hidden = true; S.replay = true;
+  await starten();
+});
+/* 🔇 für Eltern: SFX und Sprache zusammen stummschalten */
+$('ton').addEventListener('click', () => {
+  ac();
+  S.ton = !S.ton; save();
+  $('ton').textContent = S.ton ? '🔊' : '🔇';
+  if(!S.ton) Voice.flush(); else SFX.klick();
+});
 $('freiChip').addEventListener('click', () => {
   ac();
   if(S.busy) return;
@@ -1016,6 +1283,7 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 load();
 $('punkte').textContent = S.sterne;
 $('aufgabe').textContent = S.aufgabe + 1;
+$('ton').textContent = S.ton ? '🔊' : '🔇';
 $('startBot').innerHTML = svgRoboter();
 anwenden();
 $('sammlung').innerHTML = Array.from({length:S.sammlung},
