@@ -28,38 +28,47 @@ const gewinnt = plan => {
   return !sim.bums && !sim.zuLang && sim.r === T.l().ziel.r && sim.c === T.l().ziel.c && sim.mask === T.maskZiel();
 };
 
-console.log('--- Alle handgebauten Level ---');
+console.log('--- Alle handgebauten Level: mitgelieferte Musterlösung ---');
+const soll = [2,2,4,6,6,7,8,8,9,10,7,11,3,5,8,8,7,4];
 const opts = [];
 T.LEVELS.forEach((lv, i) => {
   T.aufgabe(i);
-  const t0 = performance.now();
-  const plan = T.planBFS(T.l().start.r, T.l().start.c, 0);
-  const ms = (performance.now() - t0).toFixed(1);
-  const okPlan = plan && plan.length <= T.MAX_KARTEN;
-  const okWin  = okPlan && gewinnt(plan);
-  check(okPlan && okWin, `Level ${i+1} (${lv.g[0].length}×${lv.g.length}): planBFS=${plan && plan.length} Karten, ${ms} ms, löst die Aufgabe`);
-  // Kontrolle: die planBFS-Lösung muss wirklich minimal sein (kein kürzerer Plan)
-  if(okPlan){
-    for(let k=0; k<plan.length; k++){
-      // trivial: planBFS ist BFS nach Kartenanzahl — hier nur Stichprobe für Loops
-    }
+  const lsg = lv.lsg;
+  const okLsg = lsg && lsg.length === soll[i] && lsg.length <= T.MAX_KARTEN && gewinnt(lsg);
+  let extra = '';
+  if(okLsg && lsg.length <= 6){
+    // Kreuzcheck: für kleine Level muss die Suche dasselbe Minimum finden
+    const t0 = performance.now();
+    const plan = T.planBFS(T.l().start.r, T.l().start.c, 0);
+    extra = ` | planBFS: ${plan && plan.length} (${(performance.now()-t0).toFixed(1)} ms)${plan && plan.length === lsg.length ? ' ✓' : ' ✗'}`;
+    if(!plan || plan.length !== lsg.length) fehler++;
   }
-  opts.push(plan ? plan.length : null);
+  check(okLsg, `Level ${i+1} (${lv.g[0].length}×${lv.g.length}): lsg ${lsg && lsg.length} Karten, gewinnt${extra}`);
+  opts.push(lsg ? lsg.length : null);
 });
 console.log('  🎯 Optionen:', opts.join(', '));
 
-console.log('--- ×3-Level (15, 16) brauchen die Schleife wirklich ---');
-[14, 15].forEach(i => {
+console.log('--- ×3 einsetzen (13, 14): 🎯-Plan nutzt ×3 ---');
+[[12, 3], [13, 5]].forEach(([i, soll]) => {
+  T.aufgabe(i);
+  const plan = T.planBFS(T.l().start.r, T.l().start.c, 0);
+  check(plan && plan.length === soll && plan.includes('x') && gewinnt(plan),
+    `Level ${i+1}: 🎯-Plan mit ${plan && plan.length} Karten (soll ${soll}), nutzt ×3, gewinnt`);
+});
+
+console.log('--- ×3-Level (17, 18) brauchen die Schleife wirklich ---');
+[[16, 7], [17, 4]].forEach(([i, soll]) => {
   T.aufgabe(i);
   const nurPfeile = T.loesung(T.l().start.r, T.l().start.c, 0);
   const mit = T.planBFS(T.l().start.r, T.l().start.c, 0);
   const brauchtLoop = !nurPfeile || nurPfeile.length > T.MAX_KARTEN;
   check(brauchtLoop, `Level ${i+1}: ohne ×3 ${nurPfeile ? nurPfeile.length + ' Züge (>12)' : 'unlösbar'} → Schleife nötig`);
-  check(mit && mit.includes('x') && gewinnt(mit), `Level ${i+1}: planBFS findet ${mit && mit.length}-Karten-Plan mit ×3 und gewinnt (Plan: ${mit && mit.map(k => k === 'x' ? '×3' : '↑→↓←'[k]).join(' ')})`);
+  check(mit && mit.length === soll && mit.includes('x') && gewinnt(mit),
+    `Level ${i+1}: planBFS findet ${mit && mit.length}-Karten-Plan (soll ${soll}) und gewinnt (Plan: ${mit && mit.map(k => k === 'x' ? '×3' : '↑→↓←'[k]).join(' ')})`);
 });
 
-console.log('--- Schlüssel & Tür (13, 14) ---');
-[12, 13].forEach(i => {
+console.log('--- Schlüssel & Tür (15, 16) ---');
+[14, 15].forEach(i => {
   T.aufgabe(i);
   const plan = T.planBFS(T.l().start.r, T.l().start.c, 0);
   check(plan && plan.length <= T.MAX_KARTEN && gewinnt(plan), `Level ${i+1}: ${plan && plan.length} Karten, Gewinnzustand (Schlüssel-Bit ${!!(plan && (T.simuliere(plan).mask & T.keyBit()))})`);
@@ -75,16 +84,19 @@ check(T.expandiere(Array(11).fill(0).concat(['x','x','x','x'])) === null, 'über
 check(ex(Array(12).fill(1)) === 12, '12 Pfeile bleiben 12 Züge');
 
 console.log('--- Zufallslevel (endlos) ---');
-let ok = true, laengen = new Set();
-const t0 = performance.now();
+let ok = true, laengen = new Set(), maxMs = 0;
 for(let i=0; i<200; i++){
   const z = T.zufallsLevel();
   T.levelLaden(z.g);
+  const t0 = performance.now();
   const plan = T.planBFS(T.l().start.r, T.l().start.c, 0);
-  if(!plan || plan.length < 7 || plan.length > 11 || !gewinnt(plan)){ ok = false; console.log('  ✗ Durchlauf', i, plan && plan.length); break; }
+  maxMs = Math.max(maxMs, performance.now() - t0);
+  // Zulässig: gewinnt und braucht nie mehr Karten als die Pfeil-Lösung (7–11);
+  // mit ×3 darf die Suche auch knapper finden.
+  if(!plan || plan.length > 11 || !gewinnt(plan)){ ok = false; console.log('  ✗ Durchlauf', i, plan && plan.length); break; }
   laengen.add(plan.length);
 }
-check(ok, `200 Zufallslevel: alle lösbar mit 7–11 Karten (${[...laengen].sort((a,b)=>a-b).join(',')}), ${(performance.now()-t0).toFixed(0)} ms gesamt`);
+check(ok, `200 Zufallslevel: alle gewinnbar mit ≤ 11 Karten (${[...laengen].sort((a,b)=>a-b).join(',')}), langsamster planBFS: ${maxMs.toFixed(1)} ms`);
 
 console.log(fehler ? `\n${fehler} FEHLER` : '\nAlle Tests bestanden.');
 process.exit(fehler ? 1 : 0);

@@ -493,26 +493,26 @@ const pfeilIcon = d => `<span class="pfeilDreh" style="transform:rotate(${d*90}d
 /* ------------------------------------------------------------- Level ---- */
 /* R Roboter  Z Haus  * Stern  # Stein  . frei                              */
 const LEVELS = [
-  {g:["R.Z","...","..."],                         sag:"Fahr den Roboter zum Haus."},
-  {g:["R*Z","...","..."],                         sag:"Nimm den Stern mit, dann fahr zum Haus.", neu:"Neu: ein Stern! Den musst du einsammeln."},
-  {g:["R..",".*.","..Z"],                         sag:"Hol den Stern und fahr dann zum Haus."},
-  {g:["..*","...","R.Z"],                         sag:"Hol den Stern und fahr dann zum Haus."},
-  {g:["Z*#.","..#.","..#.","...R"],               sag:"Hol den Stern und fahr dann zum Haus.", neu:"Neu: Steine! Da kommt der Roboter nicht durch. Fahr drum herum."},
-  {g:["Z#.*","..R#","..#.","#..."],               sag:"Hol den Stern und fahr dann zum Haus."},
-  {g:["..#.","#Z..","R.*#",".#.*"],               sag:"Hol beide Sterne und fahr dann zum Haus.", neu:"Neu: zwei Sterne! Hol beide."},
-  {g:["#..#","#*#.","R..*","Z#.."],               sag:"Hol beide Sterne und fahr dann zum Haus."},
-  {g:["...##",".#.*#",".R...","...*.","Z#..."],   sag:"Hol beide Sterne und fahr dann zum Haus.", neu:"Neu: ein größeres Feld!"},
-  {g:["Z.*..",".###.",".....","##...","#.R*."],   sag:"Hol beide Sterne und fahr dann zum Haus."},
-  {g:["##.*#",".*.Z.","*....","#..##","R...."],   sag:"Hol alle drei Sterne und fahr dann zum Haus.", neu:"Neu: drei Sterne! Hol alle drei."},
-  {g:["#.*..",".#...","##R#.",".#.*.","*Z..#"],   sag:"Hol alle drei Sterne und fahr dann zum Haus."},
-  {g:["R.T.Z",".#.#.","..K..",".....","....."],   sag:"Die Tür ist zu. Hol erst den Schlüssel, dann fahr zum Haus.",
-   neu:"Neu: eine Tür! Sie ist zu. Der Roboter braucht erst den Schlüssel."},
-  {g:["R.T.Z",".#.#.","..K*.",".....","....."],   sag:"Hol den Schlüssel und den Stern, dann fahr zum Haus."},
-  {g:[".........Z","..........",".......*..","..........","..........","....*.....","..........","..........","..........","R........."],
-   sag:"Fahr die lange Treppe hinauf zum Haus. Die ×3-Karte wiederholt deine Karten drei Mal.",
+  {g:["R.Z","...","..."], lsg:[1,1],              sag:"Fahr den Roboter zum Haus."},
+  {g:["R*Z","...","..."], lsg:[1,1],              sag:"Nimm den Stern mit, dann fahr zum Haus.", neu:"Neu: ein Stern! Den musst du einsammeln."},
+  {g:["R..",".*.","..Z"], lsg:[1,2,1,2],          sag:"Hol den Stern und fahr dann zum Haus."},
+  {g:["..*","...","R.Z"], lsg:[0,0,1,1,2,2],      sag:"Hol den Stern und fahr dann zum Haus."},
+  {g:["Z*#.","..#.","..#.","...R"], lsg:[3,3,0,0,0,3], sag:"Hol den Stern und fahr dann zum Haus.", neu:"Neu: Steine! Da kommt der Roboter nicht durch. Fahr drum herum."},
+  {g:["Z#.*","..R#","..#.","#..."], lsg:[0,1,3,2,3,3,0], sag:"Hol den Stern und fahr dann zum Haus."},
+  {g:["..#.","#Z..","R.*#",".#.*"], lsg:[1,1,2,1,3,0,0,3], sag:"Hol beide Sterne und fahr dann zum Haus.", neu:"Neu: zwei Sterne! Hol beide."},
+  {g:["#..#","#*#.","R..*","Z#.."], lsg:[1,'x',3,3,0,2,3,2], sag:"Hol beide Sterne und fahr dann zum Haus."},
+  {g:["...##",".#.*#",".R...","...*.","Z#..."], lsg:[1,0,1,2,2,3,3,3,2], sag:"Hol beide Sterne und fahr dann zum Haus.", neu:"Neu: ein größeres Feld!"},
+  {g:["Z.*..",".###.",".....","##...","#.R*."], lsg:[1,0,0,1,0,0,3,3,3,3], sag:"Hol beide Sterne und fahr dann zum Haus."},
+  {g:["##.*#",".*.Z.","*....","#..##","R...."], lsg:[1,0,0,3,1,2,'x'], sag:"Hol alle drei Sterne und fahr dann zum Haus.", neu:"Neu: drei Sterne! Hol alle drei."},
+  {g:["#.*..",".#...","##R#.",".#.*.","*Z..#"], lsg:[0,0,2,2,2,1,2,3,3,3,1], sag:"Hol alle drei Sterne und fahr dann zum Haus."},
+  {g:["...Z.","..*..",".....","R...."], lsg:[0,1,'x'], sag:"Fahr die Treppe hinauf zum Haus. Tipp: ↑, → und dann die ×3-Karte.",
    neu:"Neu: die ×3-Karte! Sie wiederholt alles, was vor ihr liegt, drei Mal."},
-  {g:["R.........","..........","..........","..........","....*.....","..........","..........",".......*..","..........",".........Z"],
-   sag:"Fahr die lange Treppe hinunter zum Haus. Mit der ×3-Karte passen die Karten sonst nicht."}
+  {g:["......Z",".......",".......","...*...",".......",".......","R......"], lsg:[0,1,0,1,'x'], sag:"Hol den Stern und fahr zum Haus. Die ×3-Karte macht den Weg kürzer."},
+  {g:["R.T.Z",".#.#.","..K..",".....","....."], lsg:[2,2,1,1,0,0,1,1], sag:"Die Tür ist zu. Hol erst den Schlüssel, dann fahr zum Haus.",
+   neu:"Neu: eine Tür! Sie ist zu. Der Roboter braucht erst den Schlüssel."},
+  {g:["R.T.Z",".#.#.","..K*.",".....","....."], lsg:[2,2,1,1,1,1,0,0], sag:"Hol den Schlüssel und den Stern, dann fahr zum Haus."},
+  {g:[".......Z","........",".....*..","........","...*....","........","........","R......."], lsg:[0,1,0,1,'x',0,1], sag:"Diese Treppe ist zu lang für 12 Karten. Die ×3-Karte wiederholt deine Karten drei Mal."},
+  {g:[".........Z","..........",".......*..","..........","..........","....*.....","..........","..........","..........","R........."], lsg:[0,1,'x','x'], sag:"Die ganz lange Treppe! Fahr hinauf zum Haus."}
 ];
 
 /* Aktuelles Level als Objekt */
@@ -592,49 +592,62 @@ function loesung(startR, startC, maskStart){
   const hit = bfs(startR, startC, maskStart).get(L.ziel.r+','+L.ziel.c+','+maskZiel());
   return hit ? hit.weg : null;
 }
-/* Suche nach KARTEN (Pfeile oder ×3). Ohne ×3 reicht die klassische BFS; die
-   ×3-Variante kombiniert „Weg A + ×3 + Weg B": A wird dreimal gefahren, dann B.
-   An Zwischenstellen ändert ×3 die Stellung nicht (A endet wieder bei A), darum
-   genügt es, für jede erreichbare Stellung |A| + 1 + dist(B) zu prüfen. */
+/* Suche nach KARTEN (Pfeile oder ×3) — echte Karten-BFS: Zustand =
+   (Position, Sammel-Maske, Aufführung). Jedes Kind kostet genau eine Karte
+   mehr, darum ist der erste Treffer das kartenärmste Programm. Bei großen
+   Rätseln ohne Loop-Lösung bricht das Budget ab und die klassische Pfeil-BFS
+   dient als Fallback (deren Ergebnis stimmt immer, kennt nur kein ×3). */
+const PLAN_NODES = 20000;   // Budget: hält die Suche auf Tablets unter ~100 ms
 function planBFS(startR, startC, maskStart){
   const zielKey = L.ziel.r+','+L.ziel.c+','+maskZiel();
   const fwd = bfs(startR, startC, maskStart);
   const direkt = fwd.get(zielKey);
-  let best = direkt ? {karten: direkt.weg} : null;
-  // Muster 1: „Weg A + ×3 + Weg B" — A wird dreimal gefahren, dann B
-  const cache = new Map();
-  fwd.forEach(st => {
-    if(st.dist + 1 >= MAX_KARTEN) return;                     // dann passt B nicht mehr
-    if(best && st.dist + 2 >= best.karten.length) return;     // kann nicht kürzer werden
-    let b = cache.get(st);
-    if(b === undefined){
-      const hit = bfs(st.r, st.c, st.mask).get(zielKey);
-      b = hit ? hit.weg : null;
-      cache.set(st, b);
-    }
-    if(!b) return;
-    const tot = st.dist + 1 + b.length;
-    if(tot <= MAX_KARTEN && (!best || tot < best.karten.length))
-      best = {karten: [...st.weg, 'x', ...b]};
-  });
-  // Muster 2: „Weg A + ×3 + ×3" — A wird neunmal gefahren (verschachtelte Wiederholung)
-  fwd.forEach(st => {
-    if(st.dist > 7 || 9*st.dist > EXP_CAP) return;
-    if(best && st.dist + 2 >= best.karten.length) return;
-    let r = st.r, c = st.c, m = st.mask, ok = true;
-    for(let p=0; p<8 && ok; p++){                             // 8 weitere Durchläufe von A
-      for(const d of st.weg){
-        const s = schrittVon(r,c,d,m);
-        if(!s){ ok = false; break; }
+  let best = direkt ? direkt.weg : null;
+  if(best && best.length <= 2) return best;
+  const q = [{r:startR, c:startC, m:maskStart, exp:[], k:[]}];
+  const gesehen = new Set([startR+','+startC+','+maskStart+',']);
+  let nodes = 0;
+  while(q.length){
+    const k = q.shift();
+    if(best && k.k.length >= best.length) continue;
+    if(k.k.length >= MAX_KARTEN) continue;
+    for(let i=0; i<5; i++){
+      const d = i < 4 ? i : 'x';
+      let r, c, m, exp2, k2;
+      if(d === 'x'){
+        if(!k.exp.length) continue;                 // ×3 ganz vorne: keine Wirkung
+        exp2 = k.exp.concat(k.exp, k.exp);
+        if(exp2.length > EXP_CAP) continue;         // zu lang für eine Aufführung
+        r = k.r; c = k.c; m = k.m;
+        let ok = true;
+        for(let p=0; p<2 && ok; p++){               // ×3 fährt die Aufführung 2× erneut
+          for(const d2 of k.exp){
+            const s = schrittVon(r,c,d2,m);
+            if(!s){ ok = false; break; }
+            r = s.r; c = s.c; m = s.mask;
+          }
+        }
+        if(!ok) continue;
+        k2 = [...k.k, 'x'];
+      }else{
+        const s = schrittVon(k.r, k.c, d, k.m);
+        if(!s) continue;
         r = s.r; c = s.c; m = s.mask;
+        exp2 = k.exp.concat(d);
+        k2 = [...k.k, d];
       }
+      nodes++;
+      if(nodes > PLAN_NODES) return best;           // Budget aus: Fallback reicht
+      const key = r+','+c+','+m+','+exp2.join('');
+      if(gesehen.has(key)) continue;
+      gesehen.add(key);
+      if(r === L.ziel.r && c === L.ziel.c && m === maskZiel()){
+        return (!best || k2.length < best.length) ? k2 : best;
+      }
+      q.push({r, c, m, exp:exp2, k:k2});
     }
-    if(ok && r === L.ziel.r && c === L.ziel.c && m === maskZiel()){
-      const karten = [...st.weg, 'x', 'x'];
-      if(!best || karten.length < best.karten.length) best = {karten};
-    }
-  });
-  return best ? best.karten : null;
+  }
+  return best;
 }
 /* Wo steht der Roboter nach dem bisherigen Programm? (für Tipps) */
 function simuliere(karten){
@@ -785,13 +798,20 @@ function tippGeben(){
     setTimeout(() => $('b_undo').classList.remove('wackel'), 1300);
     Voice.replace({text:'Da ist eine Karte zu viel. Tipp auf den Pfeil zurück.'});
   }else{
-    let lsg = planBFS(sim.r, sim.c, sim.mask);
+    let lsg = null;
+    // Handgebaute Level: liegt der Bauplan auf dem Musterlösungs-Pfad, den
+    // nächsten Schritt vorschlagen — ohne Suchauftrag.
+    if(L.lsg){
+      const praefix = L.lsg.slice(0, prog.length).every((k,i) => k === prog[i]);
+      if(praefix && prog.length < L.lsg.length) lsg = [L.lsg[prog.length]];
+    }
     // Liegt schon eine ×3 im Bauplan, kann das Anhängen von ×3 den Rest erledigen
-    if(prog.includes('x')){
+    if(!lsg && prog.includes('x') && prog.length < MAX_KARTEN){
       const mitX = simuliere([...prog, 'x']);
       if(!mitX.zuLang && !mitX.bums && mitX.mask === maskZiel() && mitX.r === L.ziel.r && mitX.c === L.ziel.c)
         lsg = ['x'];
     }
+    if(!lsg) lsg = planBFS(sim.r, sim.c, sim.mask);
     if(lsg && lsg.length){
       const erster = lsg[0];
       const taste = erster === 'x' ? $('b_schleife')
@@ -806,9 +826,14 @@ function tippGeben(){
 function neueAufgabe(){
   const daten = levelDaten(S.aufgabe);
   L = parse(daten.g);
-  L.sag = daten.sag; L.neu = daten.neu;
-  const plan = planBFS(L.start.r, L.start.c, 0);
-  L.opt = plan ? plan.length : 0;
+  L.sag = daten.sag; L.neu = daten.neu; L.lsg = daten.lsg || null;
+  // Bei handgebauten Leveln ist die Musterlösung (offline verifiziert) mitgeliefert;
+  // nur Zufallslevel suchen selbst — mit Budget-Fallback auf die Pfeil-BFS.
+  if(L.lsg){ L.opt = L.lsg.length; }
+  else{
+    const plan = planBFS(L.start.r, L.start.c, 0);
+    L.opt = plan ? plan.length : 0;
+  }
   prog = []; mask = 0; S.trostGegeben = false;
   bot = {r:L.start.r, c:L.start.c, d:1};
   $('aufgabe').textContent = S.aufgabe + 1;

@@ -31,22 +31,29 @@ Drehungen sind der klassische Stolperstein bei Bee-Bot-artigen Spielen.
 
 ## Schwierigkeitsstufen
 
-16 handgebaute Aufgaben, jede Neuerung wird einzeln angekündigt und eingeführt:
+18 handgebaute Aufgaben, jede Neuerung wird einzeln angekündigt und eingeführt:
 
 | Aufgabe | Feld | Neu | Kürzeste Lösung |
 |---|---|---|---|
 | 1–2 | 3×3 | Weg zum Haus, dann der erste Stern | 2 Karten |
 | 3–4 | 3×3 | Ecken, Umwege | 4–6 |
 | 5–6 | 4×4 | Steine als Hindernis | 6–7 |
-| 7–8 | 4×4 | zwei Sterne, Reihenfolge überlegen | 8–9 |
+| 7–8 | 4×4 | zwei Sterne, Reihenfolge überlegen | 8 |
 | 9–10 | 5×5 | grösseres Feld | 9–10 |
-| 11–12 | 5×5 | drei Sterne | 10–11 |
-| 13–14 | 5×5 | 🔑 Schlüssel & Tür: erst der Schlüssel, dann öffnet die Tür | 8 |
-| 15–16 | 10×10 | ×3-Karte: die lange Treppe braucht sonst 18 Karten | 4 mit ×3×3 |
+| 11–12 | 5×5 | drei Sterne | 7 (mit ×3) – 11 |
+| 13 | 5×4 | ×3-Karte: erste Treppe, 🎯 zeigt 3 | 3 mit ×3 |
+| 14 | 7×7 | ×3 üben | 5 mit ×3 |
+| 15–16 | 5×5 | 🔑 Schlüssel & Tür: erst der Schlüssel, dann öffnet die Tür | 8 |
+| 17 | 8×8 | Treppe, ohne ×3 unlösbar (14 Züge) | 7 mit ×3 |
+| 18 | 10×10 | die ganz lange Treppe | 4 mit ×3×3 |
 
 Danach erzeugt das Spiel **endlos neue Aufgaben** (5×5, 2–3 Sterne). Jede wird vor
 dem Anzeigen mit einer Breitensuche geprüft: sie ist garantiert lösbar und braucht
-7–11 Karten. Alle 16 festen Aufgaben sind mit demselben Verfahren nachgerechnet.
+7–11 Karten. Die Musterlösungen aller 18 festen Aufgaben liegen mitgeliefert bei
+(`lsg` in `LEVELS`, offline verifiziert) — nur die Endlos-Aufgaben suchen zur
+Laufzeit, mit Budget und Fallback auf die Pfeil-BFS. Bei ein paar früheren
+Aufgaben (z. B. 8 und 11) findet die Suche mit ×3 einen knapperen Weg als den
+schlichten Pfeilweg — das 🎯 zeigt dann die kleinere Zahl.
 
 ## Kürzester Weg (🎯)
 
@@ -59,11 +66,13 @@ strafen — ein Umweg gewinnt trotzdem. Die Suche versteht dabei auch die
 ## Wiederhol-Karte (×3)
 
 Die ×3-Karte wiederholt **alles, was vor ihr liegt, drei Mal** (2× zusätzlich).
-Beispiel: [→, ↑, ×3] = →↑ →↑ →↑. Damit passen Wege, die ohne Wiederholung mehr
-als 12 Karten bräuchten (Stufen 15–16: die 10×10-Treppe hat 18 Züge). Zwei
-×3-Karten hintereinander verschachteln: [↑, →, ×3, ×3] = ↑→ neun Mal. Eine
-Aufführung wird bei 64 Zügen abgeschnitten, dann wackelt die letzte Karte und
-eine ruhige Stimme bittet, eine Karte wegzunehmen.
+Beispiel: [→, ↑, ×3] = →↑ →↑ →↑. Sie kommt schon in Stufe 13 — auf der ersten
+kleinen Treppe ist sie optional, aber das 🎯 zeigt, dass es in 3 Karten geht.
+Ab Stufe 17 wird sie nötig: die 8×8-Treppe braucht 14 Züge, die ohne Wiederholung
+nicht in die 12 Karten passen; die 10×10-Treppe in Stufe 18 sogar 18 Züge, dort
+löst [↑, →, ×3, ×3] (= ↑→ neun Mal) in 4 Karten. Eine Aufführung wird bei 64
+Zügen abgeschnitten, dann wackelt die letzte Karte und eine ruhige Stimme bittet,
+eine Karte wegzunehmen.
 
 ## Schlüssel & Tür (🔑)
 
@@ -142,7 +151,7 @@ Tablet weiter die alte Fassung.
 ## Dateien
 
     index.html              das ganze Spiel (CSS, JS, SVG inline)
-    sw.js                   Service Worker (VERSION = v4)
+    sw.js                   Service Worker (VERSION = v5)
     manifest.webmanifest
     fonts/                  Fredoka (Variable Font, latin) — offline eingebettet
     icons/                  192, 512, 512-maskable, 180, favicon
