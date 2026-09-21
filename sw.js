@@ -1,5 +1,5 @@
 // Nach JEDER Änderung am Spiel hochzählen, sonst liefert der Worker die alte Fassung aus.
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = `sternen-roboter-${VERSION}`;
 const SHELL = [
   './', './index.html', './manifest.webmanifest',

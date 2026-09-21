@@ -127,6 +127,10 @@ Spiralen legen. ✖ wischt die Spur weg.
 - **Zu einer Aufgabe springen**: die 🏁-Anzeige 3 Sekunden gedrückt halten und
   die Nummer eingeben (größer als 18 = Endlos-Aufgaben).
 - **🔊/🔇 oben rechts**: Ton und Sprachausgabe gemeinsam stummschalten.
+- **Im Hintergrund schweigt das Spiel** (Sichtbarkeits-Wechsel): keine Ansagen,
+  keine Töne, kein Tipp-Timer. Mehrere Spiel-PWAs können so nebeneinander offen
+  bleiben, ohne dass eine in die andere hineinquatscht — das Tablet teilt sich
+  die Sprachausgabe systemweit, jedes Spiel muss das selbst sicherstellen.
 - Gespeichert wird in `localStorage` unter `sternen-roboter-spielstand`
   (Sterne, aktuelle Aufgabe, Planeten, gewähltes Aussehen, Ton an/aus, ob der
   Trost-Stern der aktuellen Aufgabe schon vergeben ist).
@@ -164,7 +168,7 @@ mitten in einer Aufgabe.
 ## Dateien
 
     index.html              das ganze Spiel (CSS, JS, SVG inline)
-    sw.js                   Service Worker (VERSION = v6)
+    sw.js                   Service Worker (VERSION = v7)
     manifest.webmanifest
     fonts/                  Fredoka (Variable Font, latin) — offline eingebettet
     icons/                  192, 512, 512-maskable, 180, favicon

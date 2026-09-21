@@ -345,7 +345,9 @@ function ac(){
   return AC;
 }
 function tone(f, d=.12, type='sine', vol=.16, delay=0, slide=0){
-  if(S.ton === false) return;
+  // 🔇 und Hintergrund: gar nichts von sich geben — das Tablet teilt sich
+  // Audio/TTS mit allen anderen Apps, im Hintergrund schweigt das Spiel.
+  if(S.ton === false || (typeof document !== 'undefined' && document.hidden)) return;
   const a = ac(); if(!a) return;
   const t = a.currentTime + delay;
   const o = a.createOscillator(), g = a.createGain();
@@ -388,6 +390,7 @@ const Voice = (() => {
   function speakOne(item){
     return new Promise(res => {
       if(!HAS) return res();
+      if(document.hidden) return res();          // Hintergrund: nicht sprechen
       let done = false;
       const finish = () => { if(!done){ done = true; clearTimeout(wd); res(); } };
       const u = new SpeechSynthesisUtterance(item.text);
@@ -412,6 +415,7 @@ const Voice = (() => {
   return {
     say(items){
       if(typeof S !== 'undefined' && S.ton === false) return;   // 🔇: gar nicht erst anstehen
+      if(typeof document !== 'undefined' && document.hidden) return;   // Hintergrund: schweigen
       queue.push(...[].concat(items).filter(Boolean)); run();
     },
     flush(){ epoch++; queue = []; playing = false; if(HAS) speechSynthesis.cancel(); },
@@ -862,11 +866,11 @@ function zeichnePlan(neuIdx = -1){
 let tippTimer = null;
 function tippPlanen(){
   clearTimeout(tippTimer);
-  if(S.frei) return;
+  if(S.frei || document.hidden) return;              // im Hintergrund keine Tipps
   tippTimer = setTimeout(tippGeben, 13000);
 }
 function tippGeben(){
-  if(S.busy || S.frei) return;
+  if(!L || S.busy || S.frei || document.hidden) return;
   // Wo steht der Roboter nach dem bisherigen Programm?
   const sim = simuliere(prog);
   if(sim.zuLang){
@@ -1420,6 +1424,21 @@ $('goFrei').addEventListener('click', () => startSpiel(true));
 let rT;
 window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { metrics(); zeichnePlan(); }, 120); });
 document.addEventListener('contextmenu', e => e.preventDefault());
+
+/* Hintergrund (mehrere Apps offen): komplett schweigen. Die Sprachausgabe des
+   Systems wird von ALLEN Apps geteilt — ohne das quatscht hier etwas in die
+   Pizzeria hinein und umgekehrt. Auch der Tipp-Timer stoppt im Hintergrund. */
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){
+    Voice.flush();                                   // laufende Ansage sofort aus
+    clearTimeout(tippTimer);                         // kein Tipp-Timer im Hintergrund
+    if(AC && AC.state === 'running') AC.suspend().catch(()=>{});
+  }else{
+    if(AC && AC.state === 'suspended') AC.resume().catch(()=>{});
+    if(L && !document.getElementById('start')) tippPlanen();
+  }
+});
+window.addEventListener('pagehide', () => { Voice.flush(); clearTimeout(tippTimer); });
 
 /* ------------------------------------------------------------- Start ---- */
 load();
