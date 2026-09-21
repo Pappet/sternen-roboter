@@ -168,7 +168,7 @@ mitten in einer Aufgabe.
 ## Dateien
 
     index.html              das ganze Spiel (CSS, JS, SVG inline)
-    sw.js                   Service Worker (VERSION = v7)
+    sw.js                   Service Worker (VERSION = v8)
     manifest.webmanifest
     fonts/                  Fredoka (Variable Font, latin) — offline eingebettet
     icons/                  192, 512, 512-maskable, 180, favicon

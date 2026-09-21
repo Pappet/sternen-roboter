@@ -1435,7 +1435,9 @@ document.addEventListener('visibilitychange', () => {
     if(AC && AC.state === 'running') AC.suspend().catch(()=>{});
   }else{
     if(AC && AC.state === 'suspended') AC.resume().catch(()=>{});
-    if(L && !document.getElementById('start')) tippPlanen();
+    // Tipps nur neu aufziehen, wenn wirklich ein Spiel läuft — nicht unter dem
+    // Start-, Fest- oder Werkstatt-Overlay (dort sollen keine Tipps wackeln).
+    if(L && !document.getElementById('start') && $('fest').hidden && $('werkstatt').hidden) tippPlanen();
   }
 });
 window.addEventListener('pagehide', () => { Voice.flush(); clearTimeout(tippTimer); });
